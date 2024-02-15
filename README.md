@@ -23,11 +23,11 @@ The sample notebooks provided demonstrate three simple use cases as examples of 
 ```
 
 ## Getting Started
-1. Clone repository and navigate to the `baseball-langchain-agents` folder 
+1. Clone repository and navigate to the `langgraph-multi-agent` folder 
 2. Update local `env` file with the required environment variables and rename to `.env`
 
 ## Running the Jupyter Notebooks
-1. Within the `baseball-langchain-agents` folder in a terminal, create and activate a virtual environment
+1. Create and activate a virtual environment
 ```
 python3 -m venv venv
 ```
@@ -38,15 +38,14 @@ source venv/bin/activate
 ```
 pip install -r requirements.txt
 ```
-3. Navigate to the `baseball-langchain-agents` folder.
-4. Open and execute the sample Jupyter Notebooks in order.  You must ensure that the Jupyter notebook is running a python kernel tied to the virtual environment you have created so that the required libraries will be available.  
+3. Open and execute the sample Jupyter Notebooks in order.  You must ensure that the Jupyter notebook is running a python kernel tied to the virtual environment you have created so that the required libraries will be available.  
 
 The intent of the sample notebooks is to first demonstrate a use case that is unknown to the agent system, and then to demonstrate a slight variation of the same use case after the system has learned the pattern.
 
 ## Folder Structure
 
 ```
-baseball-langchain-agents
+langgraph-multi-agent
 │   README.md
 │   .gitignore    
 │   requirements.txt   
