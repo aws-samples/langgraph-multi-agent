@@ -1,9 +1,0 @@
-# reqiured update
-OPENAI_API_KEY=
-# optional update for LangSmith
-LANGCHAIN_API_KEY=
-# if providing a LANGCHAIN_API_KEY, set this to true
-LANGCHAIN_TRACING_V2=false
-# leave these
-LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
-TOKENIZERS_PARALLELISM=false

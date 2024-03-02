@@ -14,20 +14,18 @@ from langchain_openai import ChatOpenAI
 from vectordb import vectordb
 
 # set a distance threshold for when to create a new plan vs modify an existing plan
-threshold = .55
+threshold = .5
 
 # define language models
 llm_modify = ChatOpenAI(model="gpt-3.5-turbo",temperature=0, streaming=True)
-llm_formulate = ChatOpenAI(model='gpt-4-turbo-preview',temperature=0, streaming=True)
-llm_update = ChatOpenAI(model="gpt-4-turbo-preview",temperature=0, streaming=True)
-llm_collect = ChatOpenAI(model="gpt-3.5-turbo",temperature=0, streaming=True)
+#llm_formulate = ChatOpenAI(model='gpt-4-turbo-preview',temperature=0, streaming=True)
+llm_formulate = ChatOpenAI(model='gpt-4',temperature=0, streaming=True)
+llm_update = ChatOpenAI(model="gpt-3.5-turbo",temperature=0, streaming=True)
+#llm_update = ChatOpenAI(model="gpt-4",temperature=0, streaming=True)
 
 # read function metadata from disk
-with open('dynamodb/functions.json', 'r') as file:
+with open('state/functions.json', 'r') as file:
     function_dict = json.load(file)
-
-# retrieve a collection on plans from vectordb
-plan_collection = vectordb.get_execution_plan_collection()
 
 # define string for pybaseball function descriptions that can be used in prompts
 pybaseball_functions = '''
@@ -112,11 +110,12 @@ Below is an example of how you should format your response:
 }}
 ```
 
-Now, please provide the task you would like to accomplish:
+Here is the task you need to accomplish:
 
 {task}
 
-Once you provide the task, I will formulate a plan to achieve it using the appropriate pybaseball functions.
+RULES:
+1. If you need information on a specific player, always use the `playerid_lookup` function to collect the 'key_mlbam' for the player. 
 '''
 
 def formulate_new_plan(task, existing_plan):
@@ -170,53 +169,13 @@ def update_plan(task, existing_plan, function_detail_str):
 
     return result.content + '\n\nAre you satisfied with this plan?'
 
-
-collect_system_prompt = '''
-Review the messages provided and extract the user's request related to baseball. Format your response as a JSON object with the key 'request', containing the exact request made by the user, including any necessary modifications for clarity or specificity. Use the following template for your response:
-
-```json
-{{"request": "<user_request>"}}
-```
-
-Ensure that the request is concise and directly related to baseball, and that it captures the essence of the user's inquiry without additional unrelated information. 
-
-Example:
-If the user's message is "I'm wondering how many home runs Babe Ruth hit," your response should be:
-
-```json
-{{"request": "How many home runs did Babe Ruth hit?"}}
-```
-
-Remember to:
-- Include only the relevant details related to baseball in the user's request.
-- Use the JSON object format with the key 'request' for your response.                                                  
-'''
-
-#   collect task
-task_prompt = ChatPromptTemplate.from_messages(
-                                            [
-                                                ("system", collect_system_prompt),
-                                                MessagesPlaceholder(variable_name="messages"),
-                                            ]
-                                            )
-    
-def collect_task(state):
-    '''Collec the User's task from the messages'''
-    # collect the task from User
-    task_chain = task_prompt | llm_collect | JsonOutputParser()
-    inputs = {'messages':state['messages']} 
-
-    result = task_chain.invoke(inputs)
-    
-    task = result['request']
-    
-    return task
-
-
 # main function
 def node(state):
     # collect the User's task from the state
-    task = collect_task(state)
+    task = state['messages'][0].content
+    
+    # retrieve a collection on plans from vectordb
+    plan_collection = vectordb.get_execution_plan_collection()
     
     # collect the closest plan for the task
     closest_plan = plan_collection.query(query_texts=[task], n_results=1, include=['distances','metadatas','documents'])
@@ -242,6 +201,12 @@ def node(state):
         # close enough plan - modify it with our current task
         print('Modifying nearest plan with User input')
         new_plan = modify_existing_plan(task, existing_plan)
+        
+        return {"messages": [HumanMessage(content=new_plan)], 
+                "task": task,
+                "plan": new_plan,
+                "previous_node": "Plan"
+            }
     
     else:
         # no close plan - formulate a one
@@ -257,5 +222,10 @@ def node(state):
         print('Modifying plan with function metadata')
         new_plan = update_plan(task, existing_plan, function_detail_str)
         
-    return {"messages": [HumanMessage(content=new_plan, name='Plan')]}
+        return {"messages": [HumanMessage(content=new_plan)], 
+                "task": task,
+                "plan": new_plan,
+                "previous_node": "Plan",
+                "function_detail": function_detail_str
+            }
 
