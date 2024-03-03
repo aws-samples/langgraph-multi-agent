@@ -1,20 +1,18 @@
 # core libraries
 import operator
-from typing import Annotated, Sequence, TypedDict, Dict
+from typing import Annotated, Sequence, TypedDict
 
 # langchain
 from langchain_core.messages import BaseMessage
-from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 
 # custom local libraries
 from nodes.orchestrate import execute_node, orchestrate_node, memorize_node, plan_node, revise_node, convert_node
 
-# define language model
-llm = ChatOpenAI(model="gpt-3.5-turbo")
 
 # create Orchestrate Agent 
 members = ["Plan", "Revise", "Execute", "Memorize", "Convert"]
+
 
 # construct graph
 # The agent state is the input to each node in the graph
@@ -33,7 +31,8 @@ class OrchestrateState(TypedDict):
     code: str
     # The 'function_detail' field collects details on the pybaseball functions in use
     function_detail: str
-    
+
+
 # define the nodes
 workflow = StateGraph(OrchestrateState)
 workflow.add_node("Orchestrate", orchestrate_node.node)
@@ -59,6 +58,6 @@ workflow.add_conditional_edges("Orchestrate", lambda x: x["next"], conditional_m
 workflow.add_edge("Convert", "Execute")
 
 # add entrypoint
-workflow.set_entry_point("Orchestrate") 
+workflow.set_entry_point("Orchestrate")
 
 graph = workflow.compile()

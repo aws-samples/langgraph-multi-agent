@@ -1,6 +1,6 @@
-import ast
 from graphs import execute_graph
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import AIMessage
+
 
 def node(state):
     # collect metadata from state
@@ -10,7 +10,7 @@ def node(state):
     function_detail = ['function_detail']
     # split by double newlines
     code_lines = code.split('\n\n')
-    
+
     # initiate empty list to collect successfully executed code
     successful_code = []
 
@@ -24,10 +24,9 @@ def node(state):
                     if 'error' not in s['execute']['result'].lower():
                         successful_code.append(s['execute']['code'])
 
-                
     # exctact final answer
     final_answer = s['__end__']['result']
-    
+
     final_answer += f"\nHere is the code that was used to reach this solution:\n{successful_code_str}"
     final_answer += '\n\nAre you satisfied with this result?'
 

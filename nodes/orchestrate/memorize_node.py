@@ -3,9 +3,10 @@ import pandas as pd
 
 from langchain_core.messages import AIMessage
 
+
 def commit_to_memory(task: str, updated_plan: str, code: str) -> dict:
     "Use this tool when you need to commit a task to memory"
-    
+
     execution_plan_path = 'vectordb/execution_plan.csv'
     try:
         steps_df = pd.read_csv(execution_plan_path)
@@ -37,7 +38,7 @@ def node(state):
     task = state['task']
     updated_plan = state['plan']
     code = state['code']
-    
+
     # commit
     response = commit_to_memory(task=task, updated_plan=updated_plan, code=code)
 

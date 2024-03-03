@@ -6,6 +6,7 @@ python_repl = PythonREPLTool()
 # initiate python_repl to ignore warnings
 python_repl.invoke('import warnings\nwarnings.simplefilter("ignore")')
 
+
 def node(state):
     """
     Execute line of code
@@ -16,14 +17,14 @@ def node(state):
     Returns:
         state (dict): New key added to state, error
     """
-    
-    ## State
+
+    # State
     code = state["code"]
-    iter = state["iterations"]
-    
+    iterations = state["iterations"]
+
     print(f"Executing: {code}")
     # increment iterations
-    iter += 1 
+    iterations += 1 
 
     # Attempt to execute code block
     result = python_repl.invoke(code)
@@ -31,5 +32,5 @@ def node(state):
         print(f'Result: {result}')
 
     return {"result": result,
-            "iterations": iter,
+            "iterations": iterations,
             "code": code}

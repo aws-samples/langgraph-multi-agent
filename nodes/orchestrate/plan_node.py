@@ -1,14 +1,15 @@
 # core libraries
+import boto3
 from dotenv import load_dotenv, find_dotenv
 import json
+import os
 import pandas as pd
 
 # langchain libraries
 from langchain import PromptTemplate
 from langchain_core.messages import HumanMessage
 from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_openai import ChatOpenAI
+from langchain_community.llms import Bedrock
 
 # custom local libraries
 from vectordb import vectordb
@@ -16,12 +17,24 @@ from vectordb import vectordb
 # set a distance threshold for when to create a new plan vs modify an existing plan
 threshold = .5
 
+# read local .env file
+_ = load_dotenv(find_dotenv()) 
+
+# define env vars
+access_key_id = os.environ['ACCESS_KEY_ID']
+secret_access_key = os.environ['SECRET_ACCESS_KEY']
+
+# define boto clients
+bedrock_runtime_client = boto3.client('bedrock-runtime', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
+
 # define language models
-llm_modify = ChatOpenAI(model="gpt-3.5-turbo",temperature=0, streaming=True)
-#llm_formulate = ChatOpenAI(model='gpt-4-turbo-preview',temperature=0, streaming=True)
-llm_formulate = ChatOpenAI(model='gpt-4',temperature=0, streaming=True)
-llm_update = ChatOpenAI(model="gpt-3.5-turbo",temperature=0, streaming=True)
-#llm_update = ChatOpenAI(model="gpt-4",temperature=0, streaming=True)
+model_kwargs = {'temperature': .001, 'max_tokens_to_sample': 10000}
+endpoint_url = 'prod.us-west-2.dataplane.bedrock.aws.dev'
+
+llm_modify = Bedrock(model_id='anthropic.claude-instant-v1', client=bedrock_runtime_client, model_kwargs=model_kwargs, streaming=True, endpoint_url=endpoint_url)
+llm_formulate = Bedrock(model_id='anthropic.claude-instant-v1', client=bedrock_runtime_client, model_kwargs=model_kwargs, streaming=True, endpoint_url=endpoint_url)
+llm_update = Bedrock(model_id='anthropic.claude-v2:1', client=bedrock_runtime_client, model_kwargs=model_kwargs, streaming=True, endpoint_url=endpoint_url)
+
 
 # read function metadata from disk
 with open('state/functions.json', 'r') as file:
@@ -39,8 +52,8 @@ pybaseball_functions = '''
 - standings: Get division standings for a given season.
 '''
 
+
 # define helper functions
-    # function detail string
 def create_function_detail_string(functions):
     """
     Convert a list of functions into a string that can be passed into a prompt
@@ -66,7 +79,8 @@ def create_function_detail_string(functions):
 
 #   modify
 modify_template = '''
-Review the execution plan and update it based on the new request while maintaining the original format.
+
+Human: Review the execution plan and update it based on the new request while maintaining the original format.
 
 Original Plan:
 {existing_plan}
@@ -75,7 +89,10 @@ New Request:
 {task}
 
 If the original plan already aligns with the new request, return it without any modifications.
+
+Assistant:
 '''
+
 
 def modify_existing_plan(task, existing_plan):
     '''Used to revise the propsed plan based on User feedback'''
@@ -85,11 +102,12 @@ def modify_existing_plan(task, existing_plan):
 
     result = modify_chain.invoke({'existing_plan':existing_plan, 'task':task})
 
-    return result.content + '\n\nAre you satisfied with this plan?'
+    return result + '\n\nAre you satisfied with this plan?'
 
 #   formulate
 formulate_template = '''
-You are a world-class Python programmer and an expert on baseball, with a specialization in data analysis using the pybaseball Python library. Your expertise is in formulating plans to complete tasks related to baseball data analysis without writing any Python code. Instead, you provide detailed steps that can be executed by an OpenAI Functions Agent within a Python Repl.
+
+Human: You are a world-class Python programmer and an expert on baseball, with a specialization in data analysis using the pybaseball Python library. Your expertise is in formulating plans to complete tasks related to baseball data analysis without writing any Python code. Instead, you provide detailed steps that can be executed by an OpenAI Functions Agent within a Python Repl.
 
 When a User presents you with a task, your response will be a structured plan, formatted as a JSON object with the keys "plan" and "functions". The "plan" key will contain a step-by-step guide to complete the task using only the specified pybaseball functions. The "functions" key will list all the pybaseball functions that are utilized in the plan.
 
@@ -116,6 +134,8 @@ Here is the task you need to accomplish:
 
 RULES:
 1. If you need information on a specific player, always use the `playerid_lookup` function to collect the 'key_mlbam' for the player. 
+
+Assistant:
 '''
 
 def formulate_new_plan(task, existing_plan):
@@ -125,12 +145,14 @@ def formulate_new_plan(task, existing_plan):
     formulate_chain = formulate_new_prompt | llm_formulate | JsonOutputParser()
 
     result = formulate_chain.invoke({'existing_plan':existing_plan, 'task':task})
-    
+
     return result
+
 
 #   update
 update_template = '''
-You are world class Data Analyst and an expert on baseball and analyzing data through the pybaseball Python library.  
+
+Human: You are world class Data Analyst and an expert on baseball and analyzing data through the pybaseball Python library.  
 Your goal is to help a User create a plan that can be used to complete a task.
 
 Review the task, the original plan, and the details related to the pybaseball functions in the plan.  Then re-write the plan with the following updates:
@@ -157,7 +179,10 @@ Here is the original plan:
 Here are details about the pybaseball functions in use.  Do not attempt to use any feature that is not explicitly listed in the data dictionary for that function.
 
 {function_detail_str}
+
+Assistant: 
 '''
+
 
 def update_plan(task, existing_plan, function_detail_str):
     '''Used to revise the propsed plan based on User feedback'''
@@ -167,62 +192,61 @@ def update_plan(task, existing_plan, function_detail_str):
 
     result = update_chain.invoke({'existing_plan':existing_plan, 'task':task, 'function_detail_str':function_detail_str})
 
-    return result.content + '\n\nAre you satisfied with this plan?'
+    return result + '\n\nAre you satisfied with this plan?'
+
 
 # main function
 def node(state):
     # collect the User's task from the state
     task = state['messages'][0].content
-    
+
     # retrieve a collection on plans from vectordb
     plan_collection = vectordb.get_execution_plan_collection()
-    
+
     # collect the closest plan for the task
     closest_plan = plan_collection.query(query_texts=[task], n_results=1, include=['distances','metadatas','documents'])
-    
+
     distance = closest_plan['distances'][0][0]
     existing_plan = closest_plan['metadatas'][0][0]['plan']
-    
+
     print(f'Distance to neareast plan: {distance}')
-    
+
     # write task and distance to disk
-            # write to disk
     task_output_path = 'task_and_distance.csv'
     try:
         task_df = pd.read_csv(task_output_path)
     except:
-        task_df = pd.DataFrame(columns = ['task', 'distance'])
-        
+        task_df = pd.DataFrame(columns=['task', 'distance'])
+
     task_df.loc[len(task_df.index)] = [task, distance]
     task_df.to_csv(task_output_path, index=False)
-    
+
     # determine path based on whether we have a similar "enough" plan
     if distance <= threshold:
         # close enough plan - modify it with our current task
         print('Modifying nearest plan with User input')
         new_plan = modify_existing_plan(task, existing_plan)
-        
+
         return {"messages": [HumanMessage(content=new_plan)], 
                 "task": task,
                 "plan": new_plan,
                 "previous_node": "Plan"
             }
-    
     else:
         # no close plan - formulate a one
         print('Formulating a new plan based on User input')
         formulated_plan = formulate_new_plan(task, existing_plan)
-        
+
         # create a string with function medata
         functions_str = ','.join(formulated_plan['functions'])
         print(f'Collecting metadata for functions {functions_str}')
         function_detail_str = create_function_detail_string(formulated_plan['functions'])
-        
+
         # update the plan based on this metadata
         print('Modifying plan with function metadata')
         new_plan = update_plan(task, existing_plan, function_detail_str)
-        
-        return {"messages": [HumanMessage(content=new_plan)], 
+
+        return {"messages": [HumanMessage(content=new_plan)],
                 "task": task,
                 "plan": new_plan,
                 "previous_node": "Plan",
