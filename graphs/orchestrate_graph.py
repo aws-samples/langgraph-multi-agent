@@ -13,7 +13,6 @@ from nodes.orchestrate import execute_node, orchestrate_node, memorize_node, pla
 # create Orchestrate Agent 
 members = ["Plan", "Revise", "Execute", "Memorize", "Convert"]
 
-
 # construct graph
 # The agent state is the input to each node in the graph
 class OrchestrateState(TypedDict):

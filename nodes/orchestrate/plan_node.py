@@ -1,13 +1,11 @@
 # core libraries
-import boto3
 from dotenv import load_dotenv, find_dotenv
 import json
-import os
 import pandas as pd
 
 # langchain libraries
-from langchain import PromptTemplate
 from langchain_core.messages import HumanMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_community.llms import Bedrock
 
@@ -20,21 +18,14 @@ threshold = .5
 # read local .env file
 _ = load_dotenv(find_dotenv()) 
 
-# define env vars
-access_key_id = os.environ['ACCESS_KEY_ID']
-secret_access_key = os.environ['SECRET_ACCESS_KEY']
-
-# define boto clients
-bedrock_runtime_client = boto3.client('bedrock-runtime', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
-
 # define language models
-model_kwargs = {'temperature': .001, 'max_tokens_to_sample': 10000}
-endpoint_url = 'prod.us-west-2.dataplane.bedrock.aws.dev'
+sonnet_model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
+haiku_model_id = 'anthropic.claude-3-haiku-20240307-v1:0'
+model_kwargs={'temperature': 0}
 
-llm_modify = Bedrock(model_id='anthropic.claude-instant-v1', client=bedrock_runtime_client, model_kwargs=model_kwargs, streaming=True, endpoint_url=endpoint_url)
-llm_formulate = Bedrock(model_id='anthropic.claude-instant-v1', client=bedrock_runtime_client, model_kwargs=model_kwargs, streaming=True, endpoint_url=endpoint_url)
-llm_update = Bedrock(model_id='anthropic.claude-v2:1', client=bedrock_runtime_client, model_kwargs=model_kwargs, streaming=True, endpoint_url=endpoint_url)
-
+llm_modify = BedrockChat(model_id=haiku_model_id, model_kwargs=model_kwargs)
+llm_formulate = BedrockChat(model_id=sonnet_model_id, model_kwargs=model_kwargs)
+llm_update = BedrockChat(model_id=haiku_model_id, model_kwargs=model_kwargs)
 
 # read function metadata from disk
 with open('state/functions.json', 'r') as file:
@@ -78,36 +69,33 @@ def create_function_detail_string(functions):
     return function_detail_str
 
 #   modify
-modify_template = '''
-
-Human: Review the execution plan and update it based on the new request while maintaining the original format.
-
-Original Plan:
-{existing_plan}
-
-New Request:
-{task}
+MODIFY_SYSTEM_PROMPT = '''
+Review the original plan and update it based on the new request while maintaining the format.
 
 If the original plan already aligns with the new request, return it without any modifications.
 
-Assistant:
+Here is the original plan:
+
+{existing_plan}
 '''
 
 
 def modify_existing_plan(task, existing_plan):
     '''Used to revise the propsed plan based on User feedback'''
-    modify_prompt = PromptTemplate(template=modify_template, input_variables=['existing_plan','task'])
+    modify_prompt = ChatPromptTemplate.from_messages([
+        ("system", MODIFY_SYSTEM_PROMPT),
+        MessagesPlaceholder(variable_name="messages"), 
+    ])
 
     modify_chain = modify_prompt | llm_modify
 
-    result = modify_chain.invoke({'existing_plan':existing_plan, 'task':task})
+    result = modify_chain.invoke({'existing_plan':existing_plan, 'messages':[HumanMessage(content=task)]})
 
     return result + '\n\nAre you satisfied with this plan?'
 
 #   formulate
-formulate_template = '''
-
-Human: You are a world-class Python programmer and an expert on baseball, with a specialization in data analysis using the pybaseball Python library. Your expertise is in formulating plans to complete tasks related to baseball data analysis without writing any Python code. Instead, you provide detailed steps that can be executed by an OpenAI Functions Agent within a Python Repl.
+FORMULATE_SYSTEM_PROMPT = '''
+You are a world-class Python programmer and an expert on baseball, with a specialization in data analysis using the pybaseball Python library. Your expertise is in formulating plans to complete tasks related to baseball data analysis without writing any Python code. Instead, you provide detailed steps that can be executed by an OpenAI Functions Agent within a Python Repl.
 
 When a User presents you with a task, your response will be a structured plan, formatted as a JSON object with the keys "plan" and "functions". The "plan" key will contain a step-by-step guide to complete the task using only the specified pybaseball functions. The "functions" key will list all the pybaseball functions that are utilized in the plan.
 
@@ -121,38 +109,34 @@ Below is an example of a plan for a similar task:
 
 Below is an example of how you should format your response:
 
-```
+```json
 {{
   "plan": "Step 1: Use the `playerid_lookup` function to find the player's IDs.\nStep 2: Retrieve the player's pitching stats using the `pitching_stats` function.\nStep 3: Analyze the retrieved data to determine the player's best season based on ERA and strikeouts.",
   "functions": ["playerid_lookup", "pitching_stats"]
 }}
 ```
 
-Here is the task you need to accomplish:
-
-{task}
-
 RULES:
 1. If you need information on a specific player, always use the `playerid_lookup` function to collect the 'key_mlbam' for the player. 
-
-Assistant:
 '''
 
 def formulate_new_plan(task, existing_plan):
     '''Used to revise the propsed plan based on User feedback'''
-    formulate_new_prompt = PromptTemplate(template=formulate_template, input_variables=['existing_plan','task']).partial(pybaseball_functions=pybaseball_functions)
+    formulate_new_prompt = ChatPromptTemplate.from_messages([
+        ("system", FORMULATE_SYSTEM_PROMPT),
+        MessagesPlaceholder(variable_name="messages"), 
+    ]).partial(pybaseball_functions=pybaseball_functions, existing_plan=existing_plan)
 
     formulate_chain = formulate_new_prompt | llm_formulate | JsonOutputParser()
 
-    result = formulate_chain.invoke({'existing_plan':existing_plan, 'task':task})
+    result = formulate_chain.invoke({'messages':[HumanMessage(content=task)]})
 
     return result
 
 
 #   update
-update_template = '''
-
-Human: You are world class Data Analyst and an expert on baseball and analyzing data through the pybaseball Python library.  
+UPDATE_SYSTEM_PROMPT = '''
+You are world class Data Analyst and an expert on baseball and analyzing data through the pybaseball Python library.  
 Your goal is to help a User create a plan that can be used to complete a task.
 
 Review the task, the original plan, and the details related to the pybaseball functions in the plan.  Then re-write the plan with the following updates:
@@ -165,40 +149,41 @@ Your response should be a single updated plan that includes changes resulting fr
 only the steps necessary to complete the task.
 
 Here is the list of pybaseball functions you may use, along with a brief description:
-
+###
 {pybaseball_functions}
-
-Here is the task:
-
-{task}
+###
 
 Here is the original plan:
-
+###
 {existing_plan}
+###
 
 Here are details about the pybaseball functions in use.  Do not attempt to use any feature that is not explicitly listed in the data dictionary for that function.
-
+###
 {function_detail_str}
-
-Assistant: 
+###
 '''
 
 
 def update_plan(task, existing_plan, function_detail_str):
     '''Used to revise the propsed plan based on User feedback'''
-    update_prompt = PromptTemplate(template=update_template, input_variables=['existing_plan','task','function_detail_str']).partial(pybaseball_functions=pybaseball_functions)
+    update_prompt = ChatPromptTemplate.from_messages([
+        ("system", UPDATE_SYSTEM_PROMPT),
+        MessagesPlaceholder(variable_name="messages"), 
+    ]).partial(pybaseball_functions=pybaseball_functions, existing_plan=existing_plan, function_detail_str=function_detail_str)
 
     update_chain = update_prompt | llm_update
 
-    result = update_chain.invoke({'existing_plan':existing_plan, 'task':task, 'function_detail_str':function_detail_str})
+    result = update_chain.invoke({'messages':[HumanMessage(content=task)]})
 
-    return result + '\n\nAre you satisfied with this plan?'
+    return result.content + '\n\nAre you satisfied with this plan?'
 
 
 # main function
 def node(state):
     # collect the User's task from the state
-    task = state['messages'][0].content
+    last_message = state['messages'][-1]
+    task = last_message.content
 
     # retrieve a collection on plans from vectordb
     plan_collection = vectordb.get_execution_plan_collection()

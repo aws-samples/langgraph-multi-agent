@@ -31,7 +31,7 @@ class ExecuteState(TypedDict):
 ### Edges
 def decide_to_finish(state):
     """
-    Determines whether to finish (re-try code 3 times.
+    Determines whether to finish (re-try code 3 times)
 
     Args:
         state (dict): The current graph state

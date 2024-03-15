@@ -1,52 +1,38 @@
-import boto3
 from dotenv import load_dotenv, find_dotenv
 import os
 
 from langchain_core.messages import AIMessage
-from langchain.prompts import PromptTemplate
-from langchain_community.llms import Bedrock
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_community.chat_models import BedrockChat
 
 # read local .env file
 _ = load_dotenv(find_dotenv()) 
 
-# define env vars
-access_key_id = os.environ['ACCESS_KEY_ID']
-secret_access_key = os.environ['SECRET_ACCESS_KEY']
-
-# define boto clients
-bedrock_runtime_client = boto3.client('bedrock-runtime', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
-
 # define language model
-model_kwargs = {'temperature': .001, 'max_tokens_to_sample': 10000}
-model_id = 'anthropic.claude-instant-v1'
-llm = Bedrock(model_id=model_id, client=bedrock_runtime_client, model_kwargs=model_kwargs, streaming=True, endpoint_url='prod.us-west-2.dataplane.bedrock.aws.dev')
+#model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
+model_id = 'anthropic.claude-3-haiku-20240307-v1:0'
+llm = BedrockChat(model_id=model_id, model_kwargs={'temperature': 0})
 
-pos_feedback_prompt = '''
-
-Human: A user has been provided with a plan and asked if they approve.  Classify the user's response in one of two ways:
+POS_FEEDBACK_SYSTEM_PROMPT = '''
+A user has been provided with a plan and asked if they approve.  Classify the user's response in one of two ways:
 
 1 - The user approves (Y)
 2 - The user has requested some modification (N)
 
 Respond ONLY with either Y or N.
-
-Here is the response from the user:
-
-###
-{user_input}
-###
-
-Assistant:
 '''
 
-pos_feedback_prompt_template = PromptTemplate.from_template(pos_feedback_prompt)
+pos_feedback_prompt_template = ChatPromptTemplate.from_messages([
+    ("system", POS_FEEDBACK_SYSTEM_PROMPT),
+    MessagesPlaceholder(variable_name="messages"), 
+])
+
 pos_feedback_chain = pos_feedback_prompt_template | llm
 
-
 def get_pos_feedback_indicator(state):
-    last_message = state['messages'][-1].content
-    response = pos_feedback_chain.invoke({'user_input':last_message})
-    response = response.lower().strip()
+    last_message = [state['messages'][-1]]
+    response = pos_feedback_chain.invoke({'messages':last_message})
+    response = response.content.lower().strip()
 
     if response in ['y', 'n']:
         return response
