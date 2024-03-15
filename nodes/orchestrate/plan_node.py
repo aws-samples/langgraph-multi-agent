@@ -4,10 +4,10 @@ import json
 import pandas as pd
 
 # langchain libraries
+from langchain_community.chat_models import BedrockChat
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import JsonOutputParser
-from langchain_community.llms import Bedrock
 
 # custom local libraries
 from vectordb import vectordb
@@ -91,7 +91,7 @@ def modify_existing_plan(task, existing_plan):
 
     result = modify_chain.invoke({'existing_plan':existing_plan, 'messages':[HumanMessage(content=task)]})
 
-    return result + '\n\nAre you satisfied with this plan?'
+    return result.content + '\n\nAre you satisfied with this plan?'
 
 #   formulate
 FORMULATE_SYSTEM_PROMPT = '''
@@ -118,6 +118,7 @@ Below is an example of how you should format your response:
 
 RULES:
 1. If you need information on a specific player, always use the `playerid_lookup` function to collect the 'key_mlbam' for the player. 
+2. Do not include any Python code in the plan
 '''
 
 def formulate_new_plan(task, existing_plan):
@@ -162,6 +163,10 @@ Here are details about the pybaseball functions in use.  Do not attempt to use a
 ###
 {function_detail_str}
 ###
+
+RULES:
+1. If you need information on a specific player, always use the `playerid_lookup` function to collect the 'key_mlbam' for the player. 
+2. Do not include any Python code in the plan
 '''
 
 

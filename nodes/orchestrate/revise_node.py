@@ -1,8 +1,8 @@
 from dotenv import load_dotenv, find_dotenv
 
-from langchain.prompts import PromptTemplate
+from langchain_community.chat_models import BedrockChat
 from langchain_core.messages import HumanMessage
-from langchain_community.llms import Bedrock
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 # read local .env file
 _ = load_dotenv(find_dotenv()) 
@@ -35,7 +35,6 @@ revise_prompt_template = ChatPromptTemplate.from_messages([
     MessagesPlaceholder(variable_name="messages"), 
 ])
 
-revise_prompt_template = PromptTemplate.from_template(REVISE_SYSTEM_PROMPT)
 revision_chain = revise_prompt_template | llm 
 
 

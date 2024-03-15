@@ -41,12 +41,11 @@ def decide_to_finish(state):
     """
     iter = state["iterations"]
 
-    if 'error' not in state['result'].lower() or iter == 3:
-        # All documents have been filtered check_relevance
-        # We will re-generate a new query
+    if 'error' not in state['result'].lower(): # or iter == 3
+        # code executed successfully
         return "end"
     else:
-        # We have relevant documents, so generate answer
+        # code reached an error
         return "generate"
     
 workflow = StateGraph(ExecuteState)

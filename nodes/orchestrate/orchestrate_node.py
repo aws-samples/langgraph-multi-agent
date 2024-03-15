@@ -14,10 +14,10 @@ model_id = 'anthropic.claude-3-haiku-20240307-v1:0'
 llm = BedrockChat(model_id=model_id, model_kwargs={'temperature': 0})
 
 POS_FEEDBACK_SYSTEM_PROMPT = '''
-A user has been provided with a plan and asked if they approve.  Classify the user's response in one of two ways:
+A user has been provided with a plan and asked if they approve.  Your job is to review their feedback and respond in one of two ways:
 
-1 - The user approves (Y)
-2 - The user has requested some modification (N)
+- If the user requests a modification, respond with N
+- If the user explicitly expresses approval, respond with Y
 
 Respond ONLY with either Y or N.
 '''

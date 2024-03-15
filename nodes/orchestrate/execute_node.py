@@ -7,7 +7,7 @@ def node(state):
     code = state['code']
     plan = state['plan']
     task = state['task']
-    function_detail = ['function_detail']
+    function_detail = state['function_detail']
     # split by double newlines
     code_lines = code.split('\n\n')
 

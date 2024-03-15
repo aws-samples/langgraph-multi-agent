@@ -1,8 +1,8 @@
 from dotenv import load_dotenv, find_dotenv
 import re
 
-from langchain.prompts import PromptTemplate
 from langchain_core.messages import HumanMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableLambda
 from langchain_community.chat_models import BedrockChat
 
@@ -13,8 +13,8 @@ from vectordb import vectordb
 _ = load_dotenv(find_dotenv()) 
 
 # define language model
-#model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
-model_id = 'anthropic.claude-3-haiku-20240307-v1:0'
+model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
+#model_id = 'anthropic.claude-3-haiku-20240307-v1:0'
 llm = BedrockChat(model_id=model_id, model_kwargs={'temperature': 0})
 
 # set a distance threshold for when to create a new plan vs modify an existing plan
@@ -27,7 +27,7 @@ def extract_text_between_markers(text):
     end_marker = '```'
 
     pattern = re.compile(f'{re.escape(start_marker)}(.*?){re.escape(end_marker)}', re.DOTALL)
-    matches = pattern.findall(text)
+    matches = pattern.findall(text.content)
     return matches[0]
 
 
