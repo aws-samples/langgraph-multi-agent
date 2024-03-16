@@ -25,7 +25,7 @@ model_kwargs={'temperature': 0}
 
 llm_modify = BedrockChat(model_id=haiku_model_id, model_kwargs=model_kwargs)
 llm_formulate = BedrockChat(model_id=sonnet_model_id, model_kwargs=model_kwargs)
-llm_update = BedrockChat(model_id=haiku_model_id, model_kwargs=model_kwargs)
+llm_update = BedrockChat(model_id=sonnet_model_id, model_kwargs=model_kwargs)
 
 # read function metadata from disk
 with open('state/functions.json', 'r') as file:

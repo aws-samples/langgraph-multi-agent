@@ -8,8 +8,8 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 _ = load_dotenv(find_dotenv()) 
 
 # define language model
-#model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
-model_id = 'anthropic.claude-3-haiku-20240307-v1:0'
+model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
+#model_id = 'anthropic.claude-3-haiku-20240307-v1:0'
 llm = BedrockChat(model_id=model_id, model_kwargs={'temperature': 0})
 
 
