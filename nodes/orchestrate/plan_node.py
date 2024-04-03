@@ -6,8 +6,9 @@ import pandas as pd
 # langchain libraries
 from langchain_community.chat_models import BedrockChat
 from langchain_core.messages import HumanMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.runnables import RunnableLambda
 
 # custom local libraries
 from vectordb import vectordb
@@ -32,6 +33,7 @@ with open('state/functions.json', 'r') as file:
     function_dict = json.load(file)
 
 # define string for pybaseball function descriptions that can be used in prompts
+"""
 pybaseball_functions = '''
 - playerid_lookup: Look up a player's various IDs by name.
 - statcast: Get pitch-level statcast data for all players and specific dates
@@ -42,6 +44,30 @@ pybaseball_functions = '''
 - schedule_and_record: Return a team's game-level results or future game schedules for a season.
 - standings: Get division standings for a given season.
 '''
+"""
+
+pybaseball_functions = '''
+- playerid_lookup: Look up a player's various IDs by name.
+- statcast: Get pitch-level statcast data for all players and specific dates
+- pitching_stats: Return season-level pitching data.  Use this function to return pitching stats for a season or group of seasons.
+- batting_stats: Return season-level batting data.  Use this function to return batting stats for a season or group of seasons.
+- schedule_and_record: Return a team's game-level results or future game schedules for a season.
+- standings: Get division standings for a given season.
+'''
+
+def extract_plan(message):
+    '''
+    Helper function to extract the final plan
+    '''
+    text = message.content
+    start_tag = '<plan>'
+    end_tag = '</plan>'
+    start_index = text.find(start_tag)
+    end_index = text.find(end_tag, start_index + len(start_tag))
+    if start_index != -1 and end_index != -1:
+        return text[start_index + len(start_tag):end_index]
+    else:
+        return None  # Return None if tags are not found
 
 
 # define helper functions
@@ -61,10 +87,8 @@ def create_function_detail_string(functions):
         function_detail = function_dict[function]
         docs = function_detail['docs']
         data_dictionary = function_detail['data_dictionary']
-        function_detail_str += f'Here is the documentation for function {function}:\n'
-        function_detail_str += docs
-        function_detail_str += f'\nHere is the data dictionary for function {function}:\n'
-        function_detail_str += data_dictionary
+        function_detail_str += f'Text between the <{function}_documentation></{function}_documentation> tags is documentation for the {function} function.\n<{function}_documentation>\n{docs}\n</{function}_documentation>'
+        function_detail_str += f'Text between the <{function}_dictionary></{function}_dictionary> tags is the data dictionary for the {function} function.\n<{function}_dictionary>\n{data_dictionary}\n</{function}_dictionary>'
 
     return function_detail_str
 
@@ -74,24 +98,30 @@ Review the original plan and update it based on the new request while maintainin
 
 If the original plan already aligns with the new request, return it without any modifications.
 
-Here is the original plan:
-
+Text bewteen the <original_plan></original_plan> tags is the original plan to be modified.
+<original_plan>
 {existing_plan}
+</original_plan>
+
+Text between the <rules></rules> tags are rules that must be followed.
+<rules>
+1. Always return the plan between <plan></plan> tags 
+</rules>
 '''
 
 
-def modify_existing_plan(task, existing_plan):
+def modify_existing_plan(task, existing_plan, langchain_config):
     '''Used to revise the propsed plan based on User feedback'''
     modify_prompt = ChatPromptTemplate.from_messages([
         ("system", MODIFY_SYSTEM_PROMPT),
         MessagesPlaceholder(variable_name="messages"), 
     ])
 
-    modify_chain = modify_prompt | llm_modify
+    modify_chain = modify_prompt | llm_modify | RunnableLambda(extract_plan)
 
-    result = modify_chain.invoke({'existing_plan':existing_plan, 'messages':[HumanMessage(content=task)]})
+    result = modify_chain.invoke({'existing_plan':existing_plan, 'messages':[HumanMessage(content=task)]}, config=langchain_config)
 
-    return result.content + '\n\nAre you satisfied with this plan?'
+    return result + '\n\nAre you satisfied with this plan?'
 
 #   formulate
 FORMULATE_SYSTEM_PROMPT = '''
@@ -99,29 +129,34 @@ You are a world-class Python programmer and an expert on baseball, with a specia
 
 When a User presents you with a task, your response will be a structured plan, formatted as a JSON object with the keys "plan" and "functions". The "plan" key will contain a step-by-step guide to complete the task using only the specified pybaseball functions. The "functions" key will list all the pybaseball functions that are utilized in the plan.
 
-Here is the list of pybaseball functions you may use, along with a brief description:
-
+Text between the <functions></functions> tags is the list of pybaseball functions you may use, along with a brief description.
+<functions>
 {pybaseball_functions}
+</functions>
 
-Below is an example of a plan for a similar task:
-
+Text between the <similar_plan></similar_plan> tags is an example of a plan for a similar task.
+<similar_plan>
 {existing_plan}
+</similar_plan>
 
-Below is an example of how you should format your response:
-
+Text between the <sample_response></sample_response> tags is an example of how you should format your respoonse.
+<sample_response>
 ```json
 {{
   "plan": "Step 1: Use the `playerid_lookup` function to find the player's IDs.\nStep 2: Retrieve the player's pitching stats using the `pitching_stats` function.\nStep 3: Analyze the retrieved data to determine the player's best season based on ERA and strikeouts.",
   "functions": ["playerid_lookup", "pitching_stats"]
 }}
 ```
+</sample_response>
 
-RULES:
+Text between the <rules></rules> tags are rules that must be followed.
+<rules>
 1. If you need information on a specific player, always use the `playerid_lookup` function to collect the 'key_mlbam' for the player. 
 2. Do not include any Python code in the plan
+</rules>
 '''
 
-def formulate_new_plan(task, existing_plan):
+def formulate_new_plan(task, existing_plan, langchain_config):
     '''Used to revise the propsed plan based on User feedback'''
     formulate_new_prompt = ChatPromptTemplate.from_messages([
         ("system", FORMULATE_SYSTEM_PROMPT),
@@ -130,7 +165,7 @@ def formulate_new_plan(task, existing_plan):
 
     formulate_chain = formulate_new_prompt | llm_formulate | JsonOutputParser()
 
-    result = formulate_chain.invoke({'messages':[HumanMessage(content=task)]})
+    result = formulate_chain.invoke({'messages':[HumanMessage(content=task)]}, config=langchain_config)
 
     return result
 
@@ -149,39 +184,37 @@ Review the task, the original plan, and the details related to the pybaseball fu
 Your response should be a single updated plan that includes changes resulting from the instructions above.  Your plan should NOT include python code,
 only the steps necessary to complete the task.
 
-Here is the list of pybaseball functions you may use, along with a brief description:
-###
-{pybaseball_functions}
-###
-
-Here is the original plan:
-###
+Text between the <original_plan></original_plan> tags is the original plan to be modified.
+<original_plan>
 {existing_plan}
-###
+</original_plan>
 
-Here are details about the pybaseball functions in use.  Do not attempt to use any feature that is not explicitly listed in the data dictionary for that function.
-###
+Text between the <function_detail></function_detail> tags is documentation on the functions in use.  Do not attempt to use any feature that is not explicitly listed in the data dictionary for that function.
+<function_detail> 
 {function_detail_str}
-###
+</function_detail>
 
-RULES:
+Text between the <rules></rules> tags are rules that must be followed.
+<rules>
 1. If you need information on a specific player, always use the `playerid_lookup` function to collect the 'key_mlbam' for the player. 
 2. Do not include any Python code in the plan
+3. Always return the plan between <plan></plan> tags
+</rules>
 '''
 
 
-def update_plan(task, existing_plan, function_detail_str):
+def update_plan(task, existing_plan, function_detail_str, langchain_config):
     '''Used to revise the propsed plan based on User feedback'''
     update_prompt = ChatPromptTemplate.from_messages([
         ("system", UPDATE_SYSTEM_PROMPT),
         MessagesPlaceholder(variable_name="messages"), 
-    ]).partial(pybaseball_functions=pybaseball_functions, existing_plan=existing_plan, function_detail_str=function_detail_str)
+    ]).partial(existing_plan=existing_plan, function_detail_str=function_detail_str)
 
-    update_chain = update_prompt | llm_update
+    update_chain = update_prompt | llm_update | RunnableLambda(extract_plan)
 
-    result = update_chain.invoke({'messages':[HumanMessage(content=task)]})
+    result = update_chain.invoke({'messages':[HumanMessage(content=task)]}, config=langchain_config)
 
-    return result.content + '\n\nAre you satisfied with this plan?'
+    return result + '\n\nAre you satisfied with this plan?'
 
 
 # main function
@@ -189,6 +222,10 @@ def node(state):
     # collect the User's task from the state
     last_message = state['messages'][-1]
     task = last_message.content
+    session_id = state['session_id']
+    
+    # create langchain config
+    langchain_config = {"metadata": {"conversation_id": session_id}}
 
     # retrieve a collection on plans from vectordb
     plan_collection = vectordb.get_execution_plan_collection()
@@ -215,7 +252,7 @@ def node(state):
     if distance <= threshold:
         # close enough plan - modify it with our current task
         print('Modifying nearest plan with User input')
-        new_plan = modify_existing_plan(task, existing_plan)
+        new_plan = modify_existing_plan(task, existing_plan, langchain_config)
 
         return {"messages": [HumanMessage(content=new_plan)], 
                 "task": task,
@@ -225,7 +262,7 @@ def node(state):
     else:
         # no close plan - formulate a one
         print('Formulating a new plan based on User input')
-        formulated_plan = formulate_new_plan(task, existing_plan)
+        formulated_plan = formulate_new_plan(task, existing_plan, langchain_config)
 
         # create a string with function medata
         functions_str = ','.join(formulated_plan['functions'])
@@ -234,7 +271,7 @@ def node(state):
 
         # update the plan based on this metadata
         print('Modifying plan with function metadata')
-        new_plan = update_plan(task, existing_plan, function_detail_str)
+        new_plan = update_plan(task, existing_plan, function_detail_str, langchain_config)
 
         return {"messages": [HumanMessage(content=new_plan)],
                 "task": task,

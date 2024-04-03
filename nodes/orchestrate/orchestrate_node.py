@@ -30,8 +30,14 @@ pos_feedback_prompt_template = ChatPromptTemplate.from_messages([
 pos_feedback_chain = pos_feedback_prompt_template | llm
 
 def get_pos_feedback_indicator(state):
+    # parse state metadata
     last_message = [state['messages'][-1]]
-    response = pos_feedback_chain.invoke({'messages':last_message})
+    session_id = state['session_id']
+    
+    # create langchain config
+    langchain_config = {"metadata": {"conversation_id": session_id}}
+    
+    response = pos_feedback_chain.invoke({'messages':last_message}, config=langchain_config)
     response = response.content.lower().strip()
 
     if response in ['y', 'n']:

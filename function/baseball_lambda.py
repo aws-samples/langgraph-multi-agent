@@ -26,6 +26,7 @@ def execute_workflow(task, session_id):
         state_dict[session_id]['messages'].append(human_message)
     else:
         state_dict[session_id] = {}
+        state_dict[session_id]['session_id'] = session_id
         state_dict[session_id]['messages'] = [human_message]
         
     # execute

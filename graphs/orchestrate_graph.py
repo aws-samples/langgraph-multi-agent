@@ -18,6 +18,8 @@ members = ["Plan", "Revise", "Execute", "Memorize", "Convert"]
 class OrchestrateState(TypedDict):
     # The annotation tells the graph that new messages will always be added to the current states
     messages: Annotated[Sequence[BaseMessage], operator.add]
+    # the session_id keep track of the conversation and is used for Langsmith Threads
+    session_id: str
     # The 'previous_node' field indicates what has just completed
     previous_node: str
     # The 'next' field indicates where the workflow should go

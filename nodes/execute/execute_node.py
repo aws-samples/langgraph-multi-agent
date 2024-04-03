@@ -21,13 +21,17 @@ def node(state):
     # State
     code = state["code"]
     iterations = state["iterations"]
+    session_id = state['session_id']
+    
+    # create langchain config
+    langchain_config = {"metadata": {"conversation_id": session_id}}
 
     print(f"Executing: {code}")
     # increment iterations
     iterations += 1 
 
     # Attempt to execute code block
-    result = python_repl.invoke(code)
+    result = python_repl.invoke(code, config=langchain_config)
     if result != '':
         print(f'Result: {result}')
 

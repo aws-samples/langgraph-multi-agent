@@ -12,6 +12,8 @@ class ExecuteState(TypedDict):
     Attributes:
         keys: A dictionary where each key is a string.
     """
+    # the session_id keep track of the conversation and is used for Langsmith Threads
+    session_id: str
     # The 'code' field collects the Python code
     code: str
     # The 'plan' field collects the execution plan

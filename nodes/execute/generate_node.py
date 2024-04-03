@@ -29,18 +29,22 @@ GENERATE_SYSTEM_PROMPT = """
 You are a world-class Python programmer and an expert on baseball, with a specialization in data analysis using the pybaseball Python library. 
 Your goal is to update a code block in order to resolve an error.
 
-This code block is one step toward accomplishing this task:
-###
+Text between the <task></task> tags is ultimate goal of the Python program.
+<task>
 {task} 
-###
+</task>
 
-Here is the code that has been executed successfully so far:
+Text between the <successful_code></successful_code> tags is the code that has been executed successfully so far.
+<successful_code>
 {successful_code}
+</successful_code>
 
-Here is the next code block that threw an error: 
+Text between the <errored_code></errored_code> tags is the Python code that reached an error.
+<errored_code>
 ```python
 {code} 
 ```
+</errored_code>
 
 Review the error message and rewrite the code block that threw an error to resolve the issue. 
 
@@ -67,10 +71,12 @@ def node(state):
     # State
     code = state["code"]
     task = state["task"]
-    plan = state["plan"]
     error = state['result']
     successful_code = state['successful_code']
-    function_detail = state["function_detail"]
+    session_id = state['session_id']
+    
+    # create langchain config
+    langchain_config = {"metadata": {"conversation_id": session_id}}
 
     generate_prompt_template = ChatPromptTemplate.from_messages([
         ("system", GENERATE_SYSTEM_PROMPT),
@@ -80,6 +86,6 @@ def node(state):
     # Chain
     generate_chain = generate_prompt_template | llm | RunnableLambda(extract_text_between_markers)
 
-    code_solution = generate_chain.invoke({"messages": [HumanMessage(content=f'Here is the error message:\n\n{error}')]})
+    code_solution = generate_chain.invoke({"messages": [HumanMessage(content=f'Here is the error message:\n\n<error>\n{error}\n</error>')]}, config=langchain_config)
 
     return {"code": code_solution}

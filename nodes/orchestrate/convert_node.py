@@ -39,21 +39,22 @@ Return all python code between three tick marks like this:
 python code goes here
 ```
 
-As a reference, here is a similar plan to what you will be asked to convert:
-###
+<As a reference, here is a similar plan to what you will be asked to convert>
 {closest_plan}
-###
+</As a reference, here is a similar plan to what you will be asked to convert>
 
-Here is the python code that was generated for this plan:
+<Here is the python code that was generated for this plan>
 ```python
 {closest_code}
 ```
+</Here is the python code that was generated for this plan>
 
-Rules:
+<rules>
 1. Import all necessary libraries at the start of your code.
 2. Always assign the result of a pybaseball function call to a variable.
 3. Use print() when you want to display the final result to the User.
 4. Never write functions
+</rules>
 '''
 
 convert_prompt_template = ChatPromptTemplate.from_messages([
@@ -67,6 +68,10 @@ def node(state):
     # parse state metadata
     task = state['task']
     plan = state['plan']
+    session_id = state['session_id']
+    
+    # create langchain config
+    langchain_config = {"metadata": {"conversation_id": session_id}}
 
     # retrieve a collection on plans from vectordb
     plan_collection = vectordb.get_execution_plan_collection()
@@ -80,6 +85,6 @@ def node(state):
     messages = [HumanMessage(content=plan)]
 
     # invoke convert chain
-    response = convert_chain.invoke({'messages':messages, 'closest_plan': closest_plan, 'closest_code': closest_code})
+    response = convert_chain.invoke({'messages':messages, 'closest_plan': closest_plan, 'closest_code': closest_code}, config=langchain_config)
 
     return {"code": response}
