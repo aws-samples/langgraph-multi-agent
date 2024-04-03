@@ -49,10 +49,7 @@ pybaseball_functions = '''
 pybaseball_functions = '''
 - playerid_lookup: Look up a player's various IDs by name.
 - statcast: Get pitch-level statcast data for all players and specific dates
-- pitching_stats: Return season-level pitching data.  Use this function to return pitching stats for a season or group of seasons.
-- batting_stats: Return season-level batting data.  Use this function to return batting stats for a season or group of seasons.
 - schedule_and_record: Return a team's game-level results or future game schedules for a season.
-- standings: Get division standings for a given season.
 '''
 
 def extract_plan(message):
@@ -152,7 +149,8 @@ Text between the <sample_response></sample_response> tags is an example of how y
 Text between the <rules></rules> tags are rules that must be followed.
 <rules>
 1. If you need information on a specific player, always use the `playerid_lookup` function to collect the 'key_mlbam' for the player. 
-2. Do not include any Python code in the plan
+2. Include sample Python code to demonstrate how the pybaseball functions should be called where appropriate
+3. Every step that includes a pybaseball function call should include the specific input required for that function call
 </rules>
 '''
 
@@ -175,7 +173,7 @@ UPDATE_SYSTEM_PROMPT = '''
 You are world class Data Analyst and an expert on baseball and analyzing data through the pybaseball Python library.  
 Your goal is to help a User create a plan that can be used to complete a task.
 
-Review the task, the original plan, and the details related to the pybaseball functions in the plan.  Then re-write the plan with the following updates:
+Review the original plan, and the details related to the pybaseball functions in the plan.  Then re-write the plan with the following updates:
 
 - be specific about the attributes that should be passed into each pybaseball function
 - be specific about which fields should be used in the pybaseball output
@@ -189,7 +187,7 @@ Text between the <original_plan></original_plan> tags is the original plan to be
 {existing_plan}
 </original_plan>
 
-Text between the <function_detail></function_detail> tags is documentation on the functions in use.  Do not attempt to use any feature that is not explicitly listed in the data dictionary for that function.
+Text between the <function_detail></function_detail> tags is documentation on the functions in use.
 <function_detail> 
 {function_detail_str}
 </function_detail>
@@ -197,8 +195,10 @@ Text between the <function_detail></function_detail> tags is documentation on th
 Text between the <rules></rules> tags are rules that must be followed.
 <rules>
 1. If you need information on a specific player, always use the `playerid_lookup` function to collect the 'key_mlbam' for the player. 
-2. Do not include any Python code in the plan
+2. Include sample Python code to demonstrate how the pybaseball functions should be called where appropriate
 3. Always return the plan between <plan></plan> tags
+4. Every step that includes a pybaseball function call should include the specific input required for that function call.  Double check the documentation between the <function_detail></function_detail> tags to be sure you are passing the correct attributes.
+5. Do not attempt to use any feature that is not explicitly listed in the data dictionary for that function.
 </rules>
 '''
 

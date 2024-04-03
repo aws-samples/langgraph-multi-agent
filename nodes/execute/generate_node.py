@@ -46,6 +46,11 @@ Text between the <errored_code></errored_code> tags is the Python code that reac
 ```
 </errored_code>
 
+Text between the <function_detail></function_detail> tags is information about the pybaseball function in use.  Consult this information if there is an error reached with a pybaseball function call.
+<function_detail>
+{function_detail}
+</function_detail>
+
 Review the error message and rewrite the code block that threw an error to resolve the issue. 
 
 Return all python code between three tick marks like this:
@@ -74,6 +79,7 @@ def node(state):
     error = state['result']
     successful_code = state['successful_code']
     session_id = state['session_id']
+    function_detail = state['function_detail']
     
     # create langchain config
     langchain_config = {"metadata": {"conversation_id": session_id}}
@@ -81,7 +87,7 @@ def node(state):
     generate_prompt_template = ChatPromptTemplate.from_messages([
         ("system", GENERATE_SYSTEM_PROMPT),
         MessagesPlaceholder(variable_name="messages"), 
-    ]).partial(code=code, task=task, successful_code=successful_code)
+    ]).partial(code=code, task=task, successful_code=successful_code, function_detail=function_detail)
 
     # Chain
     generate_chain = generate_prompt_template | llm | RunnableLambda(extract_text_between_markers)

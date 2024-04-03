@@ -39,7 +39,7 @@ Text between the <original_plan></original_plan> tags is the original plan to be
 {plan}
 </original_plan>
 
-Text bewteen the <function_detail></function_detail> tags is information about the functions in use.  Do not attempt to use any feature that is not explicitly listed in the data dictionary for that function.
+Text bewteen the <function_detail></function_detail> tags is information about the functions in use.  
 <function_detail> 
 {function_detail}
 <function_detail>
@@ -47,6 +47,8 @@ Text bewteen the <function_detail></function_detail> tags is information about t
 Text between the <rules></rules> tags are rules that must be followed.
 <rules>
 1. Always return the plan between <plan></plan> tags 
+2. Do not attempt to use any feature that is not explicitly listed in the data dictionary for that function.
+3. Every step that includes a pybaseball function call should include the specific input required for that function call
 </rules>
 '''
 

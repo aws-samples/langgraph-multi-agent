@@ -1,2 +1,70 @@
 task,plan,code
 dummy,dummy,dummy
+How many games did the Rays win in 2022?,"
+1. Import the schedule_and_record function from the pybaseball library:
+
+from pybaseball import schedule_and_record
+
+2. Call the schedule_and_record function with the season (2022) and team ('TB' for Tampa Bay Rays):
+
+rays_2022 = schedule_and_record(2022, 'TB')
+
+3. To get the number of wins, filter the dataframe to rows where the 'W/L' column equals 'W' (for wins) or 'W-wo' (for walk-off wins):
+
+wins = rays_2022[(rays_2022['W/L'] == 'W') | (rays_2022['W/L'] == 'W-wo')]
+
+4. Get the count of rows in the filtered dataframe to get the total number of wins (including walk-offs):
+
+num_wins = len(wins)
+
+5. Print out the number of wins:
+
+print(f""The Tampa Bay Rays won {num_wins} games in the 2022 season (including walk-offs)."")
+
+
+Are you satisfied with this plan?","
+# Import the schedule_and_record function from the pybaseball library
+from pybaseball import schedule_and_record
+# Call the schedule_and_record function with the season (2022) and team ('TB' for Tampa Bay Rays)
+rays_2022 = schedule_and_record(2022, 'TB')
+# To get the number of wins, filter the dataframe to rows where the 'W/L' column equals 'W' (for wins) or 'W-wo' (for walk-off wins)
+wins = rays_2022[(rays_2022['W/L'] == 'W') | (rays_2022['W/L'] == 'W-wo')]
+# Get the count of rows in the filtered dataframe to get the total number of wins (including walk-offs)
+num_wins = len(wins)
+# Print out the number of wins
+print(f""The Tampa Bay Rays won {num_wins} games in the 2022 season (including walk-offs)."")
+"
+How many games did the Braves win in 2022?,"
+1. Import the schedule_and_record function from the pybaseball library:
+
+from pybaseball import schedule_and_record
+
+2. Call the schedule_and_record function with the season (2022) and team ('ATL' for Atlanta Braves):
+
+braves_2022 = schedule_and_record(2022, 'ATL')
+
+3. To get the number of wins, filter the dataframe to rows where the 'W/L' column equals 'W' (for wins) or 'W-wo' (for walk-off wins):
+
+wins = braves_2022[(braves_2022['W/L'] == 'W') | (braves_2022['W/L'] == 'W-wo')]
+
+4. Get the count of rows in the filtered dataframe to get the total number of wins (including walk-offs):
+
+num_wins = len(wins)
+
+5. Print out the number of wins:
+
+print(f""The Atlanta Braves won {num_wins} games in the 2022 season (including walk-offs)."")
+
+
+Are you satisfied with this plan?","
+# Import the schedule_and_record function from the pybaseball library
+from pybaseball import schedule_and_record
+# Call the schedule_and_record function with the season (2022) and team ('ATL' for Atlanta Braves)
+braves_2022 = schedule_and_record(2022, 'ATL')
+# To get the number of wins, filter the dataframe to rows where the 'W/L' column equals 'W' (for wins) or 'W-wo' (for walk-off wins)
+wins = braves_2022[(braves_2022['W/L'] == 'W') | (braves_2022['W/L'] == 'W-wo')]
+# Get the count of rows in the filtered dataframe to get the total number of wins (including walk-offs)
+num_wins = len(wins)
+# Print out the number of wins
+print(f""The Atlanta Braves won {num_wins} games in the 2022 season (including walk-offs)."")
+"

@@ -31,7 +31,7 @@ def extract_text_between_markers(text):
     return matches[0]
 
 
-CONVERT_SYSTEM_PROMPT = '''You are a highly skilled Python programmer.  Convert the User's plan into code that can be executed in a Python REPL.  Comment your code liberally to be clear about what is happening and why.
+CONVERT_SYSTEM_PROMPT = '''You are a highly skilled Python programmer.  You will be provided with a plan and your goal is to convert the plan into code that can be executed in a Python REPL.  Comment your code liberally to be clear about what is happening and why.
 
 Return all python code between three tick marks like this:
 
@@ -39,16 +39,24 @@ Return all python code between three tick marks like this:
 python code goes here
 ```
 
-<As a reference, here is a similar plan to what you will be asked to convert>
+Text between the <similar_plan></similar_plan> tags is a plan that is similar to the plan you will be provided.
+<similar_plan>
 {closest_plan}
-</As a reference, here is a similar plan to what you will be asked to convert>
+</similar_plan>
 
-<Here is the python code that was generated for this plan>
+Text between the <similar_code></similar_code> tags is the Python code that was generated to solve the similar task listed above.
+<similar_code>
 ```python
 {closest_code}
 ```
-</Here is the python code that was generated for this plan>
+</similar_code>
 
+Text between the <function_detail></function_detail> tags is documentation on the functions in use.  Do not attempt to use any feature that is not explicitly listed in the data dictionary for that function.
+<function_detail> 
+{function_detail_str}
+</function_detail>
+
+Text between the <rules></rules> tags are rules that must be followed.
 <rules>
 1. Import all necessary libraries at the start of your code.
 2. Always assign the result of a pybaseball function call to a variable.
@@ -69,6 +77,7 @@ def node(state):
     task = state['task']
     plan = state['plan']
     session_id = state['session_id']
+    function_detail = state['function_detail']
     
     # create langchain config
     langchain_config = {"metadata": {"conversation_id": session_id}}
@@ -85,6 +94,6 @@ def node(state):
     messages = [HumanMessage(content=plan)]
 
     # invoke convert chain
-    response = convert_chain.invoke({'messages':messages, 'closest_plan': closest_plan, 'closest_code': closest_code}, config=langchain_config)
+    response = convert_chain.invoke({'messages':messages, 'closest_plan': closest_plan, 'closest_code': closest_code, 'function_detail_str': function_detail}, config=langchain_config)
 
     return {"code": response}
