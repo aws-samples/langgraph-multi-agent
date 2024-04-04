@@ -24,7 +24,7 @@ sonnet_model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
 haiku_model_id = 'anthropic.claude-3-haiku-20240307-v1:0'
 model_kwargs={'temperature': 0}
 
-llm_modify = BedrockChat(model_id=haiku_model_id, model_kwargs=model_kwargs)
+llm_modify = BedrockChat(model_id=sonnet_model_id, model_kwargs=model_kwargs)
 llm_formulate = BedrockChat(model_id=sonnet_model_id, model_kwargs=model_kwargs)
 llm_update = BedrockChat(model_id=sonnet_model_id, model_kwargs=model_kwargs)
 
@@ -33,7 +33,7 @@ with open('state/functions.json', 'r') as file:
     function_dict = json.load(file)
 
 # define string for pybaseball function descriptions that can be used in prompts
-"""
+
 pybaseball_functions = '''
 - playerid_lookup: Look up a player's various IDs by name.
 - statcast: Get pitch-level statcast data for all players and specific dates
@@ -44,14 +44,14 @@ pybaseball_functions = '''
 - schedule_and_record: Return a team's game-level results or future game schedules for a season.
 - standings: Get division standings for a given season.
 '''
-"""
 
+"""
 pybaseball_functions = '''
 - playerid_lookup: Look up a player's various IDs by name.
 - statcast: Get pitch-level statcast data for all players and specific dates
 - schedule_and_record: Return a team's game-level results or future game schedules for a season.
 '''
-
+"""
 def extract_plan(message):
     '''
     Helper function to extract the final plan
@@ -173,14 +173,15 @@ UPDATE_SYSTEM_PROMPT = '''
 You are world class Data Analyst and an expert on baseball and analyzing data through the pybaseball Python library.  
 Your goal is to help a User create a plan that can be used to complete a task.
 
-Review the original plan, and the details related to the pybaseball functions in the plan.  Then re-write the plan with the following updates:
+Review the original plan and the details related to the pybaseball functions in the plan.  Then update the plan with the following updates:
 
 - be specific about the attributes that should be passed into each pybaseball function.  Review the documentation between the <function_detail></function_detail> tags below to confirm that the correct attributes are being passed into each function. 
 - be specific about which fields should be used in the pybaseball output
 - do not attempt to use any fields that are not explicitly mentioned in the data dictionary below
 
-Your response should be a single updated plan that includes changes resulting from the instructions above.  Your plan should NOT include python code,
-only the steps necessary to complete the task.
+Your response should be a single updated plan that includes changes resulting from the instructions above.
+Before updating the plan, do some analysis within <thinking></thinking> tags. Check the documentation for the functions to ensure the correct attributes are being passed and the correct output is expected.
+
 
 Text between the <original_plan></original_plan> tags is the original plan to be modified.
 <original_plan>
@@ -205,9 +206,6 @@ Text between the <rules></rules> tags are rules that must be followed.
 
 def update_plan(task, existing_plan, function_detail_str, langchain_config):
     '''Used to revise the propsed plan based on User feedback'''
-    print('START function_detail_str')
-    print(function_detail_str)
-    print('END function_detail_str')
     update_prompt = ChatPromptTemplate.from_messages([
         ("system", UPDATE_SYSTEM_PROMPT),
         MessagesPlaceholder(variable_name="messages"), 

@@ -19,6 +19,8 @@ A user has been provided with a plan and asked if they approve.  Your job is to 
 - If the user requests a modification, respond with N
 - If the user explicitly expresses approval, respond with Y
 
+If there is any additional feedback provided by the user beyond an explicit approval, you must respond with N.
+
 Respond ONLY with either Y or N.
 '''
 

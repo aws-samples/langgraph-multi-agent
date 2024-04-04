@@ -1,70 +1,110 @@
 task,plan,code
 dummy,dummy,dummy
-How many games did the Rays win in 2022?,"
-1. Import the schedule_and_record function from the pybaseball library:
+Plot the cumulative sum of strikeouts thrown by Danny Duffy in the 2018 season.,"
+1. Use the playerid_lookup function to get Danny Duffy's MLBAM player ID:
+from pybaseball import playerid_lookup
+duffy_id = playerid_lookup('duffy', 'danny')['key_mlbam'][0]
 
-from pybaseball import schedule_and_record
+2. Use the statcast_pitcher function to get Danny Duffy's pitch-level data for the 2018 season:
+from pybaseball import statcast_pitcher
+duffy_2018 = statcast_pitcher('2018-03-01', '2018-11-01', player_id=duffy_id)
 
-2. Call the schedule_and_record function with the season (2022) and team ('TB' for Tampa Bay Rays):
+3. Filter the data to only include pitches where the 'events' column equals 'strikeout':
+duffy_strikeouts = duffy_2018[duffy_2018['events'] == 'strikeout']
 
-rays_2022 = schedule_and_record(2022, 'TB')
+4. Count the number of strikeouts for each game date:
+strikeout_counts = duffy_strikeouts.groupby('game_date')['events'].count().reset_index()
+strikeout_counts.columns = ['game_date', 'strikeout_count']
 
-3. To get the number of wins, filter the dataframe to rows where the 'W/L' column equals 'W' (for wins) or 'W-wo' (for walk-off wins):
+5. Sort the data by game_date and calculate the cumulative sum:
+strikeout_counts = strikeout_counts.sort_values('game_date').reset_index(drop=True)
+strikeout_counts['cumsum'] = strikeout_counts['strikeout_count'].cumsum()
 
-wins = rays_2022[(rays_2022['W/L'] == 'W') | (rays_2022['W/L'] == 'W-wo')]
-
-4. Get the count of rows in the filtered dataframe to get the total number of wins (including walk-offs):
-
-num_wins = len(wins)
-
-5. Print out the number of wins:
-
-print(f""The Tampa Bay Rays won {num_wins} games in the 2022 season (including walk-offs)."")
+6. Plot the 'cumsum' column against the 'game_date' column:
+import matplotlib.pyplot as plt
+plt.figure(figsize=(12, 6))
+plt.plot(strikeout_counts['game_date'], strikeout_counts['cumsum'])
+plt.xlabel('Game Date')
+plt.ylabel('Cumulative Strikeouts')
+plt.title('Danny Duffy 2018 Cumulative Strikeouts')
+plt.show()
 
 
 Are you satisfied with this plan?","
-# Import the schedule_and_record function from the pybaseball library
-from pybaseball import schedule_and_record
-# Call the schedule_and_record function with the season (2022) and team ('TB' for Tampa Bay Rays)
-rays_2022 = schedule_and_record(2022, 'TB')
-# To get the number of wins, filter the dataframe to rows where the 'W/L' column equals 'W' (for wins) or 'W-wo' (for walk-off wins)
-wins = rays_2022[(rays_2022['W/L'] == 'W') | (rays_2022['W/L'] == 'W-wo')]
-# Get the count of rows in the filtered dataframe to get the total number of wins (including walk-offs)
-num_wins = len(wins)
-# Print out the number of wins
-print(f""The Tampa Bay Rays won {num_wins} games in the 2022 season (including walk-offs)."")
+# Import necessary libraries
+from pybaseball import playerid_lookup, statcast_pitcher
+import matplotlib.pyplot as plt
+# 1. Get Danny Duffy's MLBAM player ID
+duffy_id = playerid_lookup('duffy', 'danny')['key_mlbam'][0]
+# 2. Get Danny Duffy's pitch-level data for the 2018 season
+duffy_2018 = statcast_pitcher('2018-03-01', '2018-11-01', player_id=duffy_id)
+# 3. Filter data to only include pitches where 'events' column equals 'strikeout'
+duffy_strikeouts = duffy_2018[duffy_2018['events'] == 'strikeout']
+# 4. Count the number of strikeouts for each game date
+strikeout_counts = duffy_strikeouts.groupby('game_date')['events'].count().reset_index()
+strikeout_counts.columns = ['game_date', 'strikeout_count']
+# 5. Sort the data by game_date and calculate the cumulative sum
+strikeout_counts = strikeout_counts.sort_values('game_date').reset_index(drop=True)
+strikeout_counts['cumsum'] = strikeout_counts['strikeout_count'].cumsum()
+# 6. Plot the 'cumsum' column against the 'game_date' column
+plt.figure(figsize=(12, 6))
+plt.plot(strikeout_counts['game_date'], strikeout_counts['cumsum'])
+plt.xlabel('Game Date')
+plt.ylabel('Cumulative Strikeouts')
+plt.title('Danny Duffy 2018 Cumulative Strikeouts')
+plt.show()
 "
-How many games did the Braves win in 2022?,"
-1. Import the schedule_and_record function from the pybaseball library:
+plot the cumulative sum of total walks thrown by Shane Bieber in the 2020 season.,"
+1. Use the playerid_lookup function to get Shane Bieber's MLBAM player ID:
+from pybaseball import playerid_lookup
+bieber_id = playerid_lookup('bieber', 'shane')['key_mlbam'][0]
 
-from pybaseball import schedule_and_record
+2. Use the statcast_pitcher function to get Shane Bieber's pitch-level data for the 2020 season:
+from pybaseball import statcast_pitcher
+bieber_2020 = statcast_pitcher('2020-03-01', '2020-11-01', player_id=bieber_id)
 
-2. Call the schedule_and_record function with the season (2022) and team ('ATL' for Atlanta Braves):
+3. Filter the data to only include pitches where the 'events' column equals 'walk':
+bieber_walks = bieber_2020[bieber_2020['events'] == 'walk']
 
-braves_2022 = schedule_and_record(2022, 'ATL')
+4. Count the number of walks for each game date:
+walk_counts = bieber_walks.groupby('game_date')['events'].count().reset_index()
+walk_counts.columns = ['game_date', 'walk_count']
 
-3. To get the number of wins, filter the dataframe to rows where the 'W/L' column equals 'W' (for wins) or 'W-wo' (for walk-off wins):
+5. Sort the data by game_date and calculate the cumulative sum:
+walk_counts = walk_counts.sort_values('game_date').reset_index(drop=True)
+walk_counts['cumsum'] = walk_counts['walk_count'].cumsum()
 
-wins = braves_2022[(braves_2022['W/L'] == 'W') | (braves_2022['W/L'] == 'W-wo')]
-
-4. Get the count of rows in the filtered dataframe to get the total number of wins (including walk-offs):
-
-num_wins = len(wins)
-
-5. Print out the number of wins:
-
-print(f""The Atlanta Braves won {num_wins} games in the 2022 season (including walk-offs)."")
+6. Plot the 'cumsum' column against the 'game_date' column:
+import matplotlib.pyplot as plt
+plt.figure(figsize=(12, 6))
+plt.plot(walk_counts['game_date'], walk_counts['cumsum'])
+plt.xlabel('Game Date')
+plt.ylabel('Cumulative Walks')
+plt.title('Shane Bieber 2020 Cumulative Walks')
+plt.show()
 
 
 Are you satisfied with this plan?","
-# Import the schedule_and_record function from the pybaseball library
-from pybaseball import schedule_and_record
-# Call the schedule_and_record function with the season (2022) and team ('ATL' for Atlanta Braves)
-braves_2022 = schedule_and_record(2022, 'ATL')
-# To get the number of wins, filter the dataframe to rows where the 'W/L' column equals 'W' (for wins) or 'W-wo' (for walk-off wins)
-wins = braves_2022[(braves_2022['W/L'] == 'W') | (braves_2022['W/L'] == 'W-wo')]
-# Get the count of rows in the filtered dataframe to get the total number of wins (including walk-offs)
-num_wins = len(wins)
-# Print out the number of wins
-print(f""The Atlanta Braves won {num_wins} games in the 2022 season (including walk-offs)."")
+# Import necessary libraries
+from pybaseball import playerid_lookup, statcast_pitcher
+import matplotlib.pyplot as plt
+# 1. Get Shane Bieber's MLBAM player ID
+bieber_id = playerid_lookup('bieber', 'shane')['key_mlbam'][0]
+# 2. Get Shane Bieber's pitch-level data for the 2020 season
+bieber_2020 = statcast_pitcher('2020-03-01', '2020-11-01', player_id=bieber_id)
+# 3. Filter the data to only include pitches where the 'events' column equals 'walk'
+bieber_walks = bieber_2020[bieber_2020['events'] == 'walk']
+# 4. Count the number of walks for each game date
+walk_counts = bieber_walks.groupby('game_date')['events'].count().reset_index()
+walk_counts.columns = ['game_date', 'walk_count']
+# 5. Sort the data by game_date and calculate the cumulative sum
+walk_counts = walk_counts.sort_values('game_date').reset_index(drop=True)
+walk_counts['cumsum'] = walk_counts['walk_count'].cumsum()
+# 6. Plot the 'cumsum' column against the 'game_date' column
+plt.figure(figsize=(12, 6))
+plt.plot(walk_counts['game_date'], walk_counts['cumsum'])
+plt.xlabel('Game Date')
+plt.ylabel('Cumulative Walks')
+plt.title('Shane Bieber 2020 Cumulative Walks')
+plt.show()
 "
