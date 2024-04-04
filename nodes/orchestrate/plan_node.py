@@ -84,7 +84,7 @@ def create_function_detail_string(functions):
         function_detail = function_dict[function]
         docs = function_detail['docs']
         data_dictionary = function_detail['data_dictionary']
-        function_detail_str += f'Text between the <{function}_documentation></{function}_documentation> tags is documentation for the {function} function.\n<{function}_documentation>\n{docs}\n</{function}_documentation>'
+        function_detail_str += f'Text between the <{function}_documentation></{function}_documentation> tags is documentation for the {function} function.  Consult this section to confirm which attributes to pass into the {function} function.\n<{function}_documentation>\n{docs}\n</{function}_documentation>\n'
         function_detail_str += f'Text between the <{function}_dictionary></{function}_dictionary> tags is the data dictionary for the {function} function.\n<{function}_dictionary>\n{data_dictionary}\n</{function}_dictionary>'
 
     return function_detail_str
@@ -175,7 +175,7 @@ Your goal is to help a User create a plan that can be used to complete a task.
 
 Review the original plan, and the details related to the pybaseball functions in the plan.  Then re-write the plan with the following updates:
 
-- be specific about the attributes that should be passed into each pybaseball function
+- be specific about the attributes that should be passed into each pybaseball function.  Review the documentation between the <function_detail></function_detail> tags below to confirm that the correct attributes are being passed into each function. 
 - be specific about which fields should be used in the pybaseball output
 - do not attempt to use any fields that are not explicitly mentioned in the data dictionary below
 
@@ -205,6 +205,9 @@ Text between the <rules></rules> tags are rules that must be followed.
 
 def update_plan(task, existing_plan, function_detail_str, langchain_config):
     '''Used to revise the propsed plan based on User feedback'''
+    print('START function_detail_str')
+    print(function_detail_str)
+    print('END function_detail_str')
     update_prompt = ChatPromptTemplate.from_messages([
         ("system", UPDATE_SYSTEM_PROMPT),
         MessagesPlaceholder(variable_name="messages"), 
