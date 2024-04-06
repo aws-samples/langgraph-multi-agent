@@ -269,6 +269,9 @@ def node(state):
         functions_str = ','.join(formulated_plan['functions'])
         print(f'Collecting metadata for functions {functions_str}')
         function_detail_str = create_function_detail_string(formulated_plan['functions'])
+        print('*****function_detail*******')
+        print(function_detail_str)
+        print('*****function_detail*******')
 
         # update the plan based on this metadata
         print('Modifying plan with function metadata')
