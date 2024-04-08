@@ -22,7 +22,7 @@ _ = load_dotenv(find_dotenv())
 # define language models
 sonnet_model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
 haiku_model_id = 'anthropic.claude-3-haiku-20240307-v1:0'
-model_kwargs={'temperature': 0}
+model_kwargs={'temperature': 0, "max_tokens": 10000}
 
 llm_modify = BedrockChat(model_id=sonnet_model_id, model_kwargs=model_kwargs)
 llm_formulate = BedrockChat(model_id=sonnet_model_id, model_kwargs=model_kwargs)
@@ -214,6 +214,9 @@ def update_plan(task, existing_plan, function_detail_str, langchain_config):
     update_chain = update_prompt | llm_update | RunnableLambda(extract_plan)
 
     result = update_chain.invoke({'messages':[HumanMessage(content=task)]}, config=langchain_config)
+    
+    print('UPDATE RESULT:')
+    print(result)
 
     return result + '\n\nAre you satisfied with this plan?'
 
@@ -269,9 +272,6 @@ def node(state):
         functions_str = ','.join(formulated_plan['functions'])
         print(f'Collecting metadata for functions {functions_str}')
         function_detail_str = create_function_detail_string(formulated_plan['functions'])
-        print('*****function_detail*******')
-        print(function_detail_str)
-        print('*****function_detail*******')
 
         # update the plan based on this metadata
         print('Modifying plan with function metadata')

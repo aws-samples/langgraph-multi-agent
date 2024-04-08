@@ -61,7 +61,7 @@ def node(state):
         if pos_feedback_indicator == 'n':
             return {'next': 'Revise'}
         else:
-            return {'next': 'Convert'}
+            return {'next': 'Execute'}
     elif previous_node == 'Execute':
         pos_feedback_indicator = get_pos_feedback_indicator(state)
 

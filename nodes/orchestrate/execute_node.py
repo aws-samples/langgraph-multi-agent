@@ -4,34 +4,22 @@ from langchain_core.messages import AIMessage
 
 def node(state):
     # collect metadata from state
-    code = state['code']
     plan = state['plan']
     task = state['task']
     function_detail = state['function_detail']
     session_id = state['session_id']
     
-    # split by double newlines
-    code_lines = code.split('\n\n')
 
-    # initiate empty list to collect successfully executed code
-    successful_code = []
-    successful_code_str = '```python\n' + '\n'.join(successful_code) + '\n```'
+
+    inputs = {"plan": plan, "task": task, "function_detail":function_detail, "session_id": session_id, 'messages':[], 'successful_code': []}
+
+    for s in execute_graph.graph.stream(inputs, {"recursion_limit": 100}):
+        if "__end__"  in s:
+            final_result = s['__end__']['final_result']
+            successful_code = s['__end__']['successful_code']
     
-    for line in code_lines:
-        
-        inputs = {"code": line, "plan": plan, "task": task, "function_detail":function_detail, "iterations": 0, "successful_code": successful_code_str, "session_id": session_id}
-
-        for s in execute_graph.graph.stream(inputs, {"recursion_limit": 100}):
-            #if "__end__" not in s:
-            if 'execute' in s:
-                if 'error' not in s['execute']['result'].lower():
-                    successful_code.append(s['execute']['code'])
-                    successful_code_str = '```python\n' + '\n'.join(successful_code) + '\n```'
-
-    # exctact final answer
-    final_answer = s['__end__']['result']
-
-    final_answer += f"\nHere is the code that was used to reach this solution:\n{successful_code_str}"
+    successful_code_string = ''.join(successful_code)
+    final_answer = f"{final_result}\nHere is the code that was used to reach this solution:\n\n```python\n\n{successful_code_string}\n```"
     final_answer += '\n\nAre you satisfied with this result?'
 
     return {"messages": [AIMessage(content=final_answer)], 

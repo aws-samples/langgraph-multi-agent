@@ -7,11 +7,11 @@ from langchain_core.messages import BaseMessage
 from langgraph.graph import StateGraph, END
 
 # custom local libraries
-from nodes.orchestrate import execute_node, orchestrate_node, memorize_node, plan_node, revise_node, convert_node
+from nodes.orchestrate import execute_node, orchestrate_node, memorize_node, plan_node, revise_node
 
 
 # create Orchestrate Agent 
-members = ["Plan", "Revise", "Execute", "Memorize", "Convert"]
+members = ["Plan", "Revise", "Execute", "Memorize"]
 
 # construct graph
 # The agent state is the input to each node in the graph
@@ -41,7 +41,6 @@ workflow.add_node("Plan", plan_node.node)
 workflow.add_node("Execute", execute_node.node)
 workflow.add_node("Revise", revise_node.node)
 workflow.add_node("Memorize", memorize_node.node)
-workflow.add_node("Convert", convert_node.node)
 
 
 # Now connect all the edges in the graph.
@@ -54,9 +53,6 @@ conditional_map = {k: k for k in members}
 
 # add conditional edges
 workflow.add_conditional_edges("Orchestrate", lambda x: x["next"], conditional_map)
-
-# always go to Execute after Convert
-workflow.add_edge("Convert", "Execute")
 
 # add entrypoint
 workflow.set_entry_point("Orchestrate")

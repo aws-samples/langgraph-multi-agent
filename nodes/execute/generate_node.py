@@ -1,10 +1,9 @@
 from dotenv import load_dotenv, find_dotenv
-import re
 
 from langchain_community.chat_models import BedrockChat
 from langchain_core.messages import HumanMessage
+from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.runnables import RunnableLambda
 
 # read local .env file
 _ = load_dotenv(find_dotenv())
@@ -14,51 +13,40 @@ model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
 #model_id = 'anthropic.claude-3-haiku-20240307-v1:0'
 llm = BedrockChat(model_id=model_id, model_kwargs={'temperature': 0})
 
-def extract_text_between_markers(text):
-    '''Helper function to extract code'''
-    start_marker='```python'
-    end_marker='```'
-
-    pattern = re.compile(f'{re.escape(start_marker)}(.*?){re.escape(end_marker)}', re.DOTALL)
-    matches = pattern.findall(text.content)
-    return matches[0]
-
 
 # Prompt
-GENERATE_SYSTEM_PROMPT = """
-You are a world-class Python programmer and an expert on baseball, with a specialization in data analysis using the pybaseball Python library. 
-Your goal is to update a code block in order to resolve an error.
+CONVERT_SYSTEM_PROMPT = '''<instructions>You are a highly skilled Python programmer.  Your goal is to help a user execute a plan by writing code for a Python REPL.</instructions>
 
-Text between the <task></task> tags is ultimate goal of the Python program.
-<task>
-{task} 
-</task>
-
-Text between the <successful_code></successful_code> tags is the code that has been executed successfully so far.
-<successful_code>
-{successful_code}
-</successful_code>
-
-Text between the <errored_code></errored_code> tags is the Python code that reached an error.
-<errored_code>
-```python
-{code} 
-```
-</errored_code>
-
-Text between the <function_detail></function_detail> tags is information about the pybaseball function in use.  Consult this information if there is an error reached with a pybaseball function call.
-<function_detail>
+Text between the <function_detail></function_detail> tags is documentation on the functions in use.  Do not attempt to use any feature that is not explicitly listed in the data dictionary for that function.
+<function_detail> 
 {function_detail}
 </function_detail>
 
-Review the error message and rewrite the code block that threw an error to resolve the issue. 
+Text between the <task></task> tags is the goal of the plan.
+<task>
+{task}
+</task>
 
-Return all python code between three tick marks like this:
+Text between the <plan></plan> tags is the entire plan that will be executed.
+<plan>
+{plan}
+</plan>
 
+Text between the <rules></rules> tags are rules that must be followed.
+<rules>
+1. Import all necessary libraries at the start of your code.
+2. Always assign the result of a pybaseball function call to a variable.
+3. When writing code for the last step in the plan, always use print() to write a detailed summary of the results.
+4. Never write functions
+5. Return all python code between three tick marks like this:
 ```python
 python code goes here
 ```
-"""
+6. Comment your code liberally to be clear about what is happening and why.
+7. If the entire plan has been executed, answer the request between the <task></task> tags between <final_result></final_result> tags.
+</rules>
+'''
+
 
 
 def node(state):
@@ -74,24 +62,33 @@ def node(state):
     """
 
     # State
-    code = state["code"]
-    task = state["task"]
-    error = state['result']
-    successful_code = state['successful_code']
+    plan = state['plan']
+    task = state['task']
+    messages = state['messages']
     session_id = state['session_id']
     function_detail = state['function_detail']
     
     # create langchain config
     langchain_config = {"metadata": {"conversation_id": session_id}}
-
+    
+    # determine the next set of messages
+    convert_message = 'Convert the next step of the plan into code that can be executed in a Python REPL.'
+    troubleshoot_message = 'What information would be useful in order to troubleshoot this error?  Write Python code that can be executed in a python repl to confirm this information.'
+    
+    if len(messages) > 0 and messages[-1].content[:34] == 'The previous step reached an error':
+        messages.append(HumanMessage(content=troubleshoot_message))
+    else:
+        messages.append(HumanMessage(content=convert_message))
+    
+    # define prompt template
     generate_prompt_template = ChatPromptTemplate.from_messages([
-        ("system", GENERATE_SYSTEM_PROMPT),
+        ("system", CONVERT_SYSTEM_PROMPT),
         MessagesPlaceholder(variable_name="messages"), 
-    ]).partial(code=code, task=task, successful_code=successful_code, function_detail=function_detail)
+    ]).partial(function_detail=function_detail, task=task, plan=plan)
 
-    # Chain
-    generate_chain = generate_prompt_template | llm | RunnableLambda(extract_text_between_markers)
+    # define chain
+    generate_chain = generate_prompt_template | llm | StrOutputParser()
+    
+    result = generate_chain.invoke({"messages": messages}, config=langchain_config)
 
-    code_solution = generate_chain.invoke({"messages": [HumanMessage(content=f'Here is the error message:\n\n<error>\n{error}\n</error>')]}, config=langchain_config)
-
-    return {"code": code_solution}
+    return {"result": result, 'messages': messages}
