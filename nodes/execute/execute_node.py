@@ -23,12 +23,11 @@ def node(state):
     """
 
     # State
-    result = state["result"]
+    result = state["generation_result"]
     session_id = state['session_id']
     messages = state['messages']
     successful_code = state['successful_code']
     
-    print(result)
     # collect tool call metadata   
     code = result.content[1]['input']['code']
     tool_call_id = result.content[1]['id']

@@ -26,7 +26,7 @@ class ExecuteState(TypedDict):
     # The 'function_detail' field collects details on the pybaseball functions in use
     function_detail: str
     # results from the code generation
-    result: AIMessage
+    generation_result: AIMessage
     # The 'successful_code' field collects the successfully executed code
     successful_code: list
     
@@ -42,8 +42,13 @@ def decide_to_finish(state):
     Returns:
         str: Next node to call
     """
-    if state['result'].response_metadata['stop_reason'] == 'tool_use':
-        return "execute"
+    # Each turn of the execution graph should result in one of two tool calls
+    if state['generation_result'].response_metadata['stop_reason'] == 'tool_use':
+        selected_tool = state['generation_result'].content[1]['name']
+        if selected_tool == 'FinalAnswer':
+            return "end"
+        elif selected_tool == 'PythonREPL':
+            return "execute"
     else:
         return "end"
     

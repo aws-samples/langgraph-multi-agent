@@ -2,7 +2,7 @@ from dotenv import load_dotenv, find_dotenv
 
 #from langchain_community.chat_models import BedrockChat
 from langchain_anthropic import ChatAnthropic
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.pydantic_v1 import BaseModel, Field
 
@@ -25,9 +25,14 @@ llm = ChatAnthropic(model=sonnet_model_id, temperature=0)
 class PythonREPL(BaseModel):
     """A Python REPL that can be used to executed Python code"""
     code: str = Field(description="Code block to be executed in a Python REPL")
+    
+class FinalAnswer(BaseModel):
+    """Collects the final answer once the entire execution plan has been executed."""
+    answer: str = Field(description="The answer to the user's task.")
+    plan: str = Field(description="An updated plan after any changes that were necessary during execution.  This plan should be identical to the original plan except updated with any changes that were necessary during execution.")
 
 # bind tools to model
-llm_with_tools = llm.bind_tools([PythonREPL])
+llm_with_tools = llm.bind_tools([PythonREPL, FinalAnswer])
 
 # Prompt
 GENERATE_SYSTEM_PROMPT = '''<instructions>You are a highly skilled Python programmer.  Your goal is to help a user execute a plan by writing code for the PythonREPL tool.</instructions>
@@ -51,7 +56,7 @@ Text between the <rules></rules> tags are rules that must be followed.
 <rules>
 1. Import all necessary libraries at the start of your code.
 2. Always assign the result of a pybaseball function call to a variable.
-3. If the entire plan has been executed, use a print() statement to give the results of the workflow.
+3. When executing the last step of the plan, use a print() statement to describe the results.
 4. Comment your code liberally to be clear about what is happening and why.
 </rules>
 '''
@@ -79,9 +84,9 @@ def node(state):
     langchain_config = {"metadata": {"conversation_id": session_id}}
     
     # determine the next set of messages
-    convert_message = 'Convert the next step of the plan into code that can be executed in a Python REPL.'
-    troubleshoot_message = 'What information would be useful in order to troubleshoot this error?  Write Python code that can be executed in a python repl to confirm this information.'
-    
+    convert_message = 'Convert the next step of the plan into code that can be executed in a Python REPL.  Use the PythonREPL tool in your response.'
+    troubleshoot_message = 'What information would be useful in order to troubleshoot this error?  Write Python code that can be executed in a python repl to confirm this information.  Use the PythonREPL tool in your response.'
+
     if len(messages) > 0 and messages[-1].content[:34] == 'The previous step reached an error':
         messages.append(HumanMessage(content=troubleshoot_message))
     else:
@@ -100,4 +105,4 @@ def node(state):
     
     messages.append(result) # AIMessage type
 
-    return {"result": result, 'messages': messages}
+    return {"generation_result": result, 'messages': messages}
