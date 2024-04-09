@@ -27,7 +27,7 @@ class PythonREPL(BaseModel):
     code: str = Field(description="Code block to be executed in a Python REPL")
     
 class FinalAnswer(BaseModel):
-    """Collects the final answer once the entire execution plan has been executed."""
+    """Collects the final answer once the entire execution plan has been executed.  Always use this tool after the entire plan has been executed successfully."""
     answer: str = Field(description="The answer to the user's task.")
     plan: str = Field(description="An updated plan after any changes that were necessary during execution.  This plan should be identical to the original plan except updated with any changes that were necessary during execution.")
 
