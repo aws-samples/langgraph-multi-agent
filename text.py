@@ -26,7 +26,7 @@ closest_indices = indices[0][1:4]
 similar_pitchers = pitcher_features.iloc[closest_indices]
 print(similar_pitchers[['pitcher']])'''
 
-task =  "Consider the first week of August 2020 - find 3 pitchers who's curveballs were most similar to Max Scherzer's."
+task =  "Consider the first week of August 2020 - find the IDs of the 3 pitchers who's curveballs were most similar to Max Scherzer's."
 
 function_detail = '''Text between the <playerid_lookup_documentation></playerid_lookup_documentation> tags is documentation for the playerid_lookup function.  Consult this section to confirm which attributes to pass into the playerid_lookup function.
 <playerid_lookup_documentation>

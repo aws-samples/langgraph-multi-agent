@@ -1,9 +1,8 @@
 # core libraries
-import operator
-from typing import Annotated, Sequence, TypedDict
+from typing import TypedDict
 
 # langchain
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import AIMessage
 from langgraph.graph import END, StateGraph
 
 # custom libraries
@@ -26,12 +25,8 @@ class ExecuteState(TypedDict):
     task: str
     # The 'function_detail' field collects details on the pybaseball functions in use
     function_detail: str
-    # The 'iterations' field collects the number of code iterations
-    iterations: int
-    # The 'result' field collects the result of executing the python code
-    result: str
-    # The 'final_result' field collects the final result of the execution plan
-    final_result: str
+    # results from the code generation
+    result: AIMessage
     # The 'successful_code' field collects the successfully executed code
     successful_code: list
     
@@ -47,11 +42,10 @@ def decide_to_finish(state):
     Returns:
         str: Next node to call
     """
-    #iter = state["iterations"]
-    if state['final_result']:
-        return "end"
+    if state['result'].response_metadata['stop_reason'] == 'tool_use':
+        return "execute"
     else:
-        return "generate"
+        return "end"
     
 workflow = StateGraph(ExecuteState)
 
@@ -63,15 +57,15 @@ workflow.add_node("execute", execute_node.node)  # check execution
 workflow.set_entry_point("generate")
 
 # add edges
-workflow.add_edge("generate", "execute")
+workflow.add_edge("execute", "generate")
 
 # add conditional edges
 workflow.add_conditional_edges(
-    "execute",
+    "generate",
     decide_to_finish,
     {
         "end": END,
-        "generate": "generate",
+        "execute": "execute",
     },
 )
 

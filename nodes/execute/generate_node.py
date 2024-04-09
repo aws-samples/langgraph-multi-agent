@@ -1,9 +1,11 @@
 from dotenv import load_dotenv, find_dotenv
 
-from langchain_community.chat_models import BedrockChat
-from langchain_core.messages import HumanMessage
-from langchain_core.output_parsers import StrOutputParser
+#from langchain_community.chat_models import BedrockChat
+from langchain_anthropic import ChatAnthropic
+from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.pydantic_v1 import BaseModel, Field
+
 
 # read local .env file
 _ = load_dotenv(find_dotenv())
@@ -11,11 +13,24 @@ _ = load_dotenv(find_dotenv())
 # define language model
 model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
 #model_id = 'anthropic.claude-3-haiku-20240307-v1:0'
-llm = BedrockChat(model_id=model_id, model_kwargs={'temperature': 0})
+#llm = BedrockChat(model_id=model_id, model_kwargs={'temperature': 0})
 
+opus_model_id = 'claude-3-opus-20240229'
+sonnet_model_id = 'claude-3-sonnet-20240229'
+haiku_model_id = 'claude-3-haiku-20240307'
+
+llm = ChatAnthropic(model=sonnet_model_id, temperature=0)
+
+# define tools
+class PythonREPL(BaseModel):
+    """A Python REPL that can be used to executed Python code"""
+    code: str = Field(description="Code block to be executed in a Python REPL")
+
+# bind tools to model
+llm_with_tools = llm.bind_tools([PythonREPL])
 
 # Prompt
-GENERATE_SYSTEM_PROMPT = '''<instructions>You are a highly skilled Python programmer.  Your goal is to help a user execute a plan by writing code for a Python REPL.</instructions>
+GENERATE_SYSTEM_PROMPT = '''<instructions>You are a highly skilled Python programmer.  Your goal is to help a user execute a plan by writing code for the PythonREPL tool.</instructions>
 
 Text between the <function_detail></function_detail> tags is documentation on the functions in use.  Do not attempt to use any feature that is not explicitly listed in the data dictionary for that function.
 <function_detail> 
@@ -36,18 +51,10 @@ Text between the <rules></rules> tags are rules that must be followed.
 <rules>
 1. Import all necessary libraries at the start of your code.
 2. Always assign the result of a pybaseball function call to a variable.
-3. When writing code for the last step in the plan, always use print() to write a detailed summary of the results.
-4. Never write functions
-5. Return all python code between three tick marks like this:
-```python
-python code goes here
-```
-6. Comment your code liberally to be clear about what is happening and why.
-7. If the entire plan has been executed, answer the request between the <task></task> tags between <final_result></final_result> tags.
+3. If the entire plan has been executed, use a print() statement to give the results of the workflow.
+4. Comment your code liberally to be clear about what is happening and why.
 </rules>
 '''
-
-
 
 def node(state):
     """
@@ -87,8 +94,10 @@ def node(state):
     ]).partial(function_detail=function_detail, task=task, plan=plan)
 
     # define chain
-    generate_chain = generate_prompt_template | llm | StrOutputParser()
+    generate_chain = generate_prompt_template | llm_with_tools
     
     result = generate_chain.invoke({"messages": messages}, config=langchain_config)
+    
+    messages.append(result) # AIMessage type
 
     return {"result": result, 'messages': messages}
