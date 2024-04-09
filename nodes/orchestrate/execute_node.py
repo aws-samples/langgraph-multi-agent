@@ -21,7 +21,7 @@ def node(state):
                 final_result = generation_content[1]['input']['answer']
                 plan = generation_content[1]['input']['plan']
         
-                successful_code_string = ''.join(successful_code)
+                successful_code_string = '\n'.join(successful_code)
                 final_answer = f"{final_result}\nHere is the code that was used to reach this solution:\n\n```python\n\n{successful_code_string}\n```"
                 final_answer += '\n\nAre you satisfied with this result?'
             else:

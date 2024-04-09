@@ -1,2 +1,50 @@
 task,plan,code
 dummy,dummy,dummy
+How many games did the Rays win in 2022?,"Step 1: Import the necessary libraries
+import pandas as pd
+from pybaseball import schedule_and_record
+
+Step 2: Use the schedule_and_record function to retrieve the Rays' 2022 game results
+rays_2022 = schedule_and_record(2022, 'TB')
+
+Step 3: Count the number of regular wins  
+num_regular_wins = len(rays_2022[rays_2022['W/L'] == 'W'])
+
+Step 4: Count the number of walk-off wins
+num_walkoff_wins = len(rays_2022[rays_2022['W/L'] == 'W-wo'])  
+
+Step 5: Calculate the total number of wins
+num_total_wins = num_regular_wins + num_walkoff_wins
+
+Step 6: Print the result
+print(f""The Tampa Bay Rays won {num_total_wins} games in the 2022 season."")","import pandas as pd
+from pybaseball import schedule_and_record
+rays_2022 = schedule_and_record(2022, 'TB')
+num_regular_wins = len(rays_2022[rays_2022['W/L'] == 'W'])
+num_walkoff_wins = len(rays_2022[rays_2022['W/L'] == 'W-wo'])
+num_total_wins = num_regular_wins + num_walkoff_wins
+print(f""The Tampa Bay Rays won {num_total_wins} games in the 2022 season."")"
+How many games did the Braves win in 2022?,"Step 1: Import the necessary libraries
+import pandas as pd
+from pybaseball import schedule_and_record
+
+Step 2: Use the schedule_and_record function to retrieve the Braves' 2022 game results
+braves_2022 = schedule_and_record(2022, 'ATL')
+
+Step 3: Count the number of regular wins 
+num_regular_wins = len(braves_2022[braves_2022['W/L'] == 'W'])
+
+Step 4: Count the number of walk-off wins
+num_walkoff_wins = len(braves_2022[braves_2022['W/L'] == 'W-wo'])
+
+Step 5: Calculate the total number of wins
+num_total_wins = num_regular_wins + num_walkoff_wins
+
+Step 6: Print the result
+print(f""The Atlanta Braves won {num_total_wins} games in the 2022 season."")","import pandas as pd
+from pybaseball import schedule_and_record
+braves_2022 = schedule_and_record(2022, 'ATL')
+num_regular_wins = len(braves_2022[braves_2022['W/L'] == 'W'])
+num_walkoff_wins = len(braves_2022[braves_2022['W/L'] == 'W-wo'])
+num_total_wins = num_regular_wins + num_walkoff_wins
+print(f""The Atlanta Braves won {num_total_wins} games in the 2022 season."")"
