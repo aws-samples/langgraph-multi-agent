@@ -45,13 +45,7 @@ pybaseball_functions = '''
 - standings: Get division standings for a given season.
 '''
 
-"""
-pybaseball_functions = '''
-- playerid_lookup: Look up a player's various IDs by name.
-- statcast: Get pitch-level statcast data for all players and specific dates
-- schedule_and_record: Return a team's game-level results or future game schedules for a season.
-'''
-"""
+
 def extract_plan(message):
     '''
     Helper function to extract the final plan
@@ -283,4 +277,3 @@ def node(state):
                 "previous_node": "Plan",
                 "function_detail": function_detail_str
             }
-

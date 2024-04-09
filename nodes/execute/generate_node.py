@@ -15,7 +15,7 @@ llm = BedrockChat(model_id=model_id, model_kwargs={'temperature': 0})
 
 
 # Prompt
-CONVERT_SYSTEM_PROMPT = '''<instructions>You are a highly skilled Python programmer.  Your goal is to help a user execute a plan by writing code for a Python REPL.</instructions>
+GENERATE_SYSTEM_PROMPT = '''<instructions>You are a highly skilled Python programmer.  Your goal is to help a user execute a plan by writing code for a Python REPL.</instructions>
 
 Text between the <function_detail></function_detail> tags is documentation on the functions in use.  Do not attempt to use any feature that is not explicitly listed in the data dictionary for that function.
 <function_detail> 
@@ -82,7 +82,7 @@ def node(state):
     
     # define prompt template
     generate_prompt_template = ChatPromptTemplate.from_messages([
-        ("system", CONVERT_SYSTEM_PROMPT),
+        ("system", GENERATE_SYSTEM_PROMPT),
         MessagesPlaceholder(variable_name="messages"), 
     ]).partial(function_detail=function_detail, task=task, plan=plan)
 

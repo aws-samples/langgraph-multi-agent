@@ -2,7 +2,7 @@
 import re
 
 # langchain libraries
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import AIMessage
 from langchain_experimental.tools import PythonREPLTool
 
 # define python repl

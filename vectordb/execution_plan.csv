@@ -1,148 +1,294 @@
 task,plan,code
 dummy,dummy,dummy
 Plot the cumulative sum of strikeouts thrown by Danny Duffy in the 2018 season.,"
-1. Use the playerid_lookup function to get Danny Duffy's MLBAM player ID:
+1. Use `playerid_lookup` to get Danny Duffy's MLBAM player ID:
+
+```python
 from pybaseball import playerid_lookup
-duffy_id = playerid_lookup('duffy', 'danny')['key_mlbam'][0]
 
-2. Use the statcast_pitcher function to get Danny Duffy's pitch-level data for the 2018 season:
-from pybaseball import statcast_pitcher
-duffy_2018 = statcast_pitcher('2018-03-01', '2018-11-01', player_id=duffy_id)
+duffy_id = playerid_lookup('duffy', 'danny')['key_mlbam'].values[0]
+```
 
-3. Filter the data to only include pitches where the 'events' column equals 'strikeout':
-duffy_strikeouts = duffy_2018[duffy_2018['events'] == 'strikeout']
+2. Use `statcast_pitcher` to retrieve Danny Duffy's pitch-level data for the 2018 season:
+
+```python
+from pybaseball import statcast_pitcher 
+
+duffy_2018 = statcast_pitcher('2018-03-01', '2018-10-31', player_id=duffy_id)
+```
+
+3. Filter the data to only include strikeouts, using a case-insensitive search:
+
+```python
+strikeouts = duffy_2018.loc[duffy_2018['events'].str.lower() == 'strikeout']
+```
 
 4. Count the number of strikeouts for each game date:
-strikeout_counts = duffy_strikeouts.groupby('game_date')['events'].count().reset_index()
-strikeout_counts.columns = ['game_date', 'strikeout_count']
 
-5. Sort the data by game_date and calculate the cumulative sum:
-strikeout_counts = strikeout_counts.sort_values('game_date').reset_index(drop=True)
-strikeout_counts['cumsum'] = strikeout_counts['strikeout_count'].cumsum()
+```python
+strikeouts_by_date = strikeouts.groupby('game_date').size().reset_index()
+strikeouts_by_date.columns = ['game_date', 'strikeouts']
+```
 
-6. Plot the 'cumsum' column against the 'game_date' column:
+5. Sort the data by game date:
+
+```python
+strikeouts_by_date = strikeouts_by_date.sort_values('game_date')
+```
+
+6. Calculate the cumulative sum of strikeouts:
+
+```python
+strikeouts_by_date['cum_strikeouts'] = strikeouts_by_date['strikeouts'].cumsum()
+```
+
+7. Plot the cumulative sum over time:
+
+```python
 import matplotlib.pyplot as plt
+
 plt.figure(figsize=(12, 6))
-plt.plot(strikeout_counts['game_date'], strikeout_counts['cumsum'])
-plt.xlabel('Game Date')
+plt.plot(strikeouts_by_date['game_date'], strikeouts_by_date['cum_strikeouts'])
+plt.xlabel('Date')
 plt.ylabel('Cumulative Strikeouts')
 plt.title('Danny Duffy 2018 Cumulative Strikeouts')
 plt.show()
+```
 
 
 Are you satisfied with this plan?","
-# Import necessary libraries
+# Import required libraries
+import pandas as pd
+from pybaseball import playerid_lookup
+
+# Use playerid_lookup to get Danny Duffy's MLBAM player ID
+duffy_id = playerid_lookup('duffy', 'danny')['key_mlbam'].values[0]
+
+
+# Import required libraries
+import pandas as pd
 from pybaseball import playerid_lookup, statcast_pitcher
+
+# Use playerid_lookup to get Danny Duffy's MLBAM player ID
+duffy_id = playerid_lookup('duffy', 'danny')['key_mlbam'].values[0]
+
+# Use statcast_pitcher to retrieve Danny Duffy's pitch-level data for the 2018 season
+duffy_2018 = statcast_pitcher('2018-03-01', '2018-10-31', player_id=duffy_id)
+
+
+# Import required libraries
+import pandas as pd
+from pybaseball import playerid_lookup, statcast_pitcher
+
+# Use playerid_lookup to get Danny Duffy's MLBAM player ID
+duffy_id = playerid_lookup('duffy', 'danny')['key_mlbam'].values[0]
+
+# Use statcast_pitcher to retrieve Danny Duffy's pitch-level data for the 2018 season
+duffy_2018 = statcast_pitcher('2018-03-01', '2018-10-31', player_id=duffy_id)
+
+# Filter the data to only include strikeouts, using a case-insensitive search
+strikeouts = duffy_2018.loc[duffy_2018['events'].str.lower() == 'strikeout']
+
+
+# Import required libraries
+import pandas as pd
+from pybaseball import playerid_lookup, statcast_pitcher
+
+# Use playerid_lookup to get Danny Duffy's MLBAM player ID
+duffy_id = playerid_lookup('duffy', 'danny')['key_mlbam'].values[0]
+
+# Use statcast_pitcher to retrieve Danny Duffy's pitch-level data for the 2018 season
+duffy_2018 = statcast_pitcher('2018-03-01', '2018-10-31', player_id=duffy_id)
+
+# Filter the data to only include strikeouts, using a case-insensitive search
+strikeouts = duffy_2018.loc[duffy_2018['events'].str.lower() == 'strikeout']
+
+# Count the number of strikeouts for each game date
+strikeouts_by_date = strikeouts.groupby('game_date').size().reset_index()
+strikeouts_by_date.columns = ['game_date', 'strikeouts']
+
+
+# Import required libraries
+import pandas as pd
+from pybaseball import playerid_lookup, statcast_pitcher
+
+# Use playerid_lookup to get Danny Duffy's MLBAM player ID
+duffy_id = playerid_lookup('duffy', 'danny')['key_mlbam'].values[0]
+
+# Use statcast_pitcher to retrieve Danny Duffy's pitch-level data for the 2018 season
+duffy_2018 = statcast_pitcher('2018-03-01', '2018-10-31', player_id=duffy_id)
+
+# Filter the data to only include strikeouts, using a case-insensitive search
+strikeouts = duffy_2018.loc[duffy_2018['events'].str.lower() == 'strikeout']
+
+# Count the number of strikeouts for each game date
+strikeouts_by_date = strikeouts.groupby('game_date').size().reset_index()
+strikeouts_by_date.columns = ['game_date', 'strikeouts']
+
+# Sort the data by game date
+strikeouts_by_date = strikeouts_by_date.sort_values('game_date')
+
+
+# Import required libraries
+import pandas as pd
+from pybaseball import playerid_lookup, statcast_pitcher
+
+# Use playerid_lookup to get Danny Duffy's MLBAM player ID
+duffy_id = playerid_lookup('duffy', 'danny')['key_mlbam'].values[0]
+
+# Use statcast_pitcher to retrieve Danny Duffy's pitch-level data for the 2018 season
+duffy_2018 = statcast_pitcher('2018-03-01', '2018-10-31', player_id=duffy_id)
+
+# Filter the data to only include strikeouts, using a case-insensitive search
+strikeouts = duffy_2018.loc[duffy_2018['events'].str.lower() == 'strikeout']
+
+# Count the number of strikeouts for each game date
+strikeouts_by_date = strikeouts.groupby('game_date').size().reset_index()
+strikeouts_by_date.columns = ['game_date', 'strikeouts']
+
+# Sort the data by game date
+strikeouts_by_date = strikeouts_by_date.sort_values('game_date')
+
+# Calculate the cumulative sum of strikeouts
+strikeouts_by_date['cum_strikeouts'] = strikeouts_by_date['strikeouts'].cumsum()
+
+
+# Import required libraries
+import pandas as pd
 import matplotlib.pyplot as plt
-# 1. Get Danny Duffy's MLBAM player ID
-duffy_id = playerid_lookup('duffy', 'danny')['key_mlbam'][0]
-# 2. Get Danny Duffy's pitch-level data for the 2018 season
-duffy_2018 = statcast_pitcher('2018-03-01', '2018-11-01', player_id=duffy_id)
-# 3. Filter data to only include pitches where 'events' column equals 'strikeout'
-duffy_strikeouts = duffy_2018[duffy_2018['events'] == 'strikeout']
-# 4. Count the number of strikeouts for each game date
-strikeout_counts = duffy_strikeouts.groupby('game_date')['events'].count().reset_index()
-strikeout_counts.columns = ['game_date', 'strikeout_count']
-# 5. Sort the data by game_date and calculate the cumulative sum
-strikeout_counts = strikeout_counts.sort_values('game_date').reset_index(drop=True)
-strikeout_counts['cumsum'] = strikeout_counts['strikeout_count'].cumsum()
-# 6. Plot the 'cumsum' column against the 'game_date' column
+from pybaseball import playerid_lookup, statcast_pitcher
+
+# Use playerid_lookup to get Danny Duffy's MLBAM player ID
+duffy_id = playerid_lookup('duffy', 'danny')['key_mlbam'].values[0]
+
+# Use statcast_pitcher to retrieve Danny Duffy's pitch-level data for the 2018 season
+duffy_2018 = statcast_pitcher('2018-03-01', '2018-10-31', player_id=duffy_id)
+
+# Filter the data to only include strikeouts, using a case-insensitive search
+strikeouts = duffy_2018.loc[duffy_2018['events'].str.lower() == 'strikeout']
+
+# Count the number of strikeouts for each game date
+strikeouts_by_date = strikeouts.groupby('game_date').size().reset_index()
+strikeouts_by_date.columns = ['game_date', 'strikeouts']
+
+# Sort the data by game date
+strikeouts_by_date = strikeouts_by_date.sort_values('game_date')
+
+# Calculate the cumulative sum of strikeouts
+strikeouts_by_date['cum_strikeouts'] = strikeouts_by_date['strikeouts'].cumsum()
+
+# Plot the cumulative sum over time
 plt.figure(figsize=(12, 6))
-plt.plot(strikeout_counts['game_date'], strikeout_counts['cumsum'])
-plt.xlabel('Game Date')
+plt.plot(strikeouts_by_date['game_date'], strikeouts_by_date['cum_strikeouts'])
+plt.xlabel('Date')
 plt.ylabel('Cumulative Strikeouts')
 plt.title('Danny Duffy 2018 Cumulative Strikeouts')
 plt.show()
 "
 plot the cumulative sum of total walks thrown by Shane Bieber in the 2020 season.,"
-1. Use the playerid_lookup function to get Shane Bieber's MLBAM player ID:
+
+1. Use `playerid_lookup` to get Shane Bieber's MLBAM player ID:
+
+```python
 from pybaseball import playerid_lookup
-bieber_id = playerid_lookup('bieber', 'shane')['key_mlbam'][0]
 
-2. Use the statcast_pitcher function to get Shane Bieber's pitch-level data for the 2020 season:
-from pybaseball import statcast_pitcher
-bieber_2020 = statcast_pitcher('2020-03-01', '2020-11-01', player_id=bieber_id)
+bieber_id = playerid_lookup('bieber', 'shane')['key_mlbam'].values[0]
+```
 
-3. Filter the data to only include pitches where the 'events' column equals 'walk':
-bieber_walks = bieber_2020[bieber_2020['events'] == 'walk']
+2. Use `statcast_pitcher` to retrieve Shane Bieber's pitch-level data for the 2020 season:
+
+```python
+from pybaseball import statcast_pitcher 
+
+bieber_2020 = statcast_pitcher('2020-03-01', '2020-10-31', player_id=bieber_id)
+```
+
+3. Filter the data to only include walks, using a case-insensitive search:
+
+```python
+walks = bieber_2020.loc[bieber_2020['events'].str.lower() == 'walk']
+```
 
 4. Count the number of walks for each game date:
-walk_counts = bieber_walks.groupby('game_date')['events'].count().reset_index()
-walk_counts.columns = ['game_date', 'walk_count']
 
-5. Sort the data by game_date and calculate the cumulative sum:
-walk_counts = walk_counts.sort_values('game_date').reset_index(drop=True)
-walk_counts['cumsum'] = walk_counts['walk_count'].cumsum()
+```python
+walks_by_date = walks.groupby('game_date').size().reset_index()
+walks_by_date.columns = ['game_date', 'walks']
+```
 
-6. Plot the 'cumsum' column against the 'game_date' column:
+5. Sort the data by game date:
+
+```python
+walks_by_date = walks_by_date.sort_values('game_date')
+```
+
+6. Calculate the cumulative sum of walks:
+
+```python
+walks_by_date['cum_walks'] = walks_by_date['walks'].cumsum()
+```
+
+7. Plot the cumulative sum over time with only 5 labels on the x-axis:
+
+```python
 import matplotlib.pyplot as plt
+
 plt.figure(figsize=(12, 6))
-plt.plot(walk_counts['game_date'], walk_counts['cumsum'])
-plt.xlabel('Game Date')
+plt.plot(walks_by_date['game_date'], walks_by_date['cum_walks'])
+plt.xlabel('Date')
 plt.ylabel('Cumulative Walks')
 plt.title('Shane Bieber 2020 Cumulative Walks')
+plt.xticks(walks_by_date['game_date'][::len(walks_by_date)//5])
 plt.show()
+```
+
+8. Display the plot:
+
+![Shane Bieber 2020 Cumulative Walks Plot](shane_bieber_2020_walks_plot.png)
+
 
 
 Are you satisfied with this plan?","
-# Import necessary libraries
-from pybaseball import playerid_lookup, statcast_pitcher
+# Import required libraries
+from pybaseball import playerid_lookup
+
+# Use playerid_lookup to get Shane Bieber's MLBAM player ID
+bieber_id = playerid_lookup('bieber', 'shane')['key_mlbam'].values[0]
+
+
+# Import required library
+from pybaseball import statcast_pitcher
+
+# Use statcast_pitcher to retrieve Shane Bieber's pitch-level data for 2020 season
+bieber_2020 = statcast_pitcher('2020-03-01', '2020-10-31', player_id=bieber_id)
+
+
+# Filter the data to only include walks, using a case-insensitive search
+walks = bieber_2020.loc[bieber_2020['events'].str.lower() == 'walk']
+
+
+# Count the number of walks for each game date
+walks_by_date = walks.groupby('game_date').size().reset_index()
+walks_by_date.columns = ['game_date', 'walks']
+
+
+# Sort the data by game date
+walks_by_date = walks_by_date.sort_values('game_date')
+
+
+# Calculate the cumulative sum of walks
+walks_by_date['cum_walks'] = walks_by_date['walks'].cumsum()
+
+
+# Import required library
 import matplotlib.pyplot as plt
-# 1. Get Shane Bieber's MLBAM player ID
-bieber_id = playerid_lookup('bieber', 'shane')['key_mlbam'][0]
-# 2. Get Shane Bieber's pitch-level data for the 2020 season
-bieber_2020 = statcast_pitcher('2020-03-01', '2020-11-01', player_id=bieber_id)
-# 3. Filter the data to only include pitches where the 'events' column equals 'walk'
-bieber_walks = bieber_2020[bieber_2020['events'] == 'walk']
-# 4. Count the number of walks for each game date
-walk_counts = bieber_walks.groupby('game_date')['events'].count().reset_index()
-walk_counts.columns = ['game_date', 'walk_count']
-# 5. Sort the data by game_date and calculate the cumulative sum
-walk_counts = walk_counts.sort_values('game_date').reset_index(drop=True)
-walk_counts['cumsum'] = walk_counts['walk_count'].cumsum()
-# 6. Plot the 'cumsum' column against the 'game_date' column
+
+# Plot the cumulative sum over time with only 5 labels on the x-axis
 plt.figure(figsize=(12, 6))
-plt.plot(walk_counts['game_date'], walk_counts['cumsum'])
-plt.xlabel('Game Date')
+plt.plot(walks_by_date['game_date'], walks_by_date['cum_walks'])
+plt.xlabel('Date')
 plt.ylabel('Cumulative Walks')
 plt.title('Shane Bieber 2020 Cumulative Walks')
+plt.xticks(walks_by_date['game_date'][::len(walks_by_date)//5])
 plt.show()
-"
-How many games did the Rays win in 2022?,"
-1. Import the schedule_and_record function from pybaseball:
-
-```python
-from pybaseball import schedule_and_record
-```
-
-2. Get the 2022 schedule and results for the Tampa Bay Rays:
-
-```python
-rays_2022 = schedule_and_record(2022, 'TB')
-```
-
-3. Filter the dataframe to games where the Rays won (W/L == 'W') or had a walk-off win (W/L == 'W-wo'):
-
-```python
-rays_wins = rays_2022[(rays_2022['W/L'] == 'W') | (rays_2022['W/L'] == 'W-wo')]
-```
-
-4. Count the number of rows (games won) in the filtered dataframe:
-
-```python
-num_wins = len(rays_wins)
-print(f""The Tampa Bay Rays won {num_wins} games in 2022."")
-```
-
-
-Are you satisfied with this plan?","
-# 1. Import the schedule_and_record function from pybaseball
-from pybaseball import schedule_and_record
-# 2. Get the 2022 schedule and results for the Tampa Bay Rays
-rays_2022 = schedule_and_record(2022, 'TB')
-# 3. Filter the dataframe to games where the Rays won (W/L == 'W') or had a walk-off win (W/L == 'W-wo')
-rays_wins = rays_2022[(rays_2022['W/L'] == 'W') | (rays_2022['W/L'] == 'W-wo')]
-# 4. Count the number of rows (games won) in the filtered dataframe
-num_wins = len(rays_wins)
-print(f""The Tampa Bay Rays won {num_wins} games in 2022."")
 "
