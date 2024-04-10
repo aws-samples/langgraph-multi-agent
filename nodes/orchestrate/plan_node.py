@@ -25,29 +25,29 @@ threshold = .5
 _ = load_dotenv(find_dotenv()) 
 
 with open('state/functions.json', 'r') as file:
-    function_dict = json.load(file)
+    library_dict = json.load(file)
     
-functions_string = ''
-for key in function_dict:
-    docs = function_dict[key]['docs']
-    functions_string += f'<{key}>\n{docs}\n</{key}>\n'
+libraries_string = ''
+for key in library_dict:
+    docs = library_dict[key]['docs']
+    libraries_string += f'<{key}>\n{docs}\n</{key}>\n'
     
 # Define data models
 class ModifiedPlan(BaseModel):
-    """Modify a plan"""
+    """Modify a plan based on feedback from the user"""
     plan: str = Field(description="The modified plan after making changes requested by the user.")
-    
-class Functions(BaseModel):
-    """Pybaseball libraries"""
-    function: str = Field(description="pybaseball functions that are used in the plan")
+
+class Libraries(BaseModel):
+    """Pybaseball libraries used in the plan"""
+    library: str = Field(description="pybaseball libraries that are used in the plan.  These will all be imported from the pybaseball library.")
     
 class InitialPlan(BaseModel):
     """Initial plan generated to solve the user's task"""
     plan: str = Field(description="The plan that was generated to solve the user's task.")
-    functions: List[Functions]
+    libraries: List[Libraries]
     
 class UpdatedPlan(BaseModel):
-    """Update a plan"""
+    """Update a plan based on pybaseball library documentation"""
     plan: str = Field(description="The updated plan after making any updates necessary to ensure the correct attributes are passed to each of the pybasell functions.")
 
 # define language models
@@ -55,24 +55,27 @@ llm_haiku = ChatAnthropic(model='claude-3-haiku-20240307', temperature=0)
 llm_sonnet = ChatAnthropic(model='claude-3-sonnet-20240229', temperature=0)
 llm_opus = ChatAnthropic(model='claude-3-opus-20240229', temperature=0)
 
-llm_initial_plan = llm_sonnet.with_structured_output(InitialPlan, include_raw=False)
-llm_modify = llm_haiku.with_structured_output(ModifiedPlan, include_raw=False)
-llm_update = llm_sonnet.with_structured_output(UpdatedPlan, include_raw=False)
+llm_initial_plan = llm_sonnet.bind_tools([InitialPlan])
+llm_modify = llm_sonnet.bind_tools([ModifiedPlan])
+llm_update = llm_sonnet.bind_tools([UpdatedPlan])
 
-def collect_function_helpers(functions):
+
+def collect_library_helpers(libraries):
     '''
     Collect function documentation
     '''
     # extract function names
-    function_list = [f.function for f in functions]
-    functions_string = ', '.join(function_list)
-    print(f'Collecting documentation for {functions_string}')
+
+    libraries_string = ', '.join(libraries)
+    print(f'Collecting documentation for {libraries_string}')
     
     helper_string = ''
-    for function in function_list:
-        function_detail = function_dict[function]
-        docs = function_detail['docs']
-        helper_string += f'Text between the <{function}_documentation></{function}_documentation> tags is documentation for the {function} function.  Consult this section to confirm which attributes to pass into the {function} function.\n<{function}_documentation>\n{docs}\n</{function}_documentation>\n'
+    for lib in libraries:
+        lib_detail = library_dict[lib]
+        docs = lib_detail['docs']
+        data_dictionary = lib_detail['data_dictionary']
+        helper_string += f'Text between the <{lib}_documentation></{lib}_documentation> tags is documentation for the {lib} library.  Consult this section to confirm which attributes to pass into the {lib} library.\n<{lib}_documentation>\n{docs}\n</{lib}_documentation>\n'
+        helper_string += f'Text between the <{lib}_dictionary></{lib}_dictionary> tags is the data dictionary for the {lib} library.  Consult this section to confirm which columns are present in the response from the {lib} library.\n<{lib}_dictionary>\n{data_dictionary}\n</{lib}_dictionary>'
 
     return helper_string
 
@@ -99,14 +102,17 @@ def modify_existing_plan(task, nearest_task, nearest_plan, langchain_config):
     '''Used to revise the propsed plan based on User feedback'''
     modify_prompt = ChatPromptTemplate.from_messages([
         ("system", MODIFY_SYSTEM_PROMPT),
-        ("user", "{updates}") 
+        ("user", "{updates}.  Use ModifiedPlan to describe the plan.") 
     ])
 
     modify_chain = modify_prompt | llm_modify 
 
     result = modify_chain.invoke({'existing_plan':nearest_plan, 'original_task': nearest_task, 'updates':task}, config=langchain_config)
 
-    return result.plan + '\n\nAre you satisfied with this plan?'
+    # parse tool response
+    modified_plan = [c['input']['plan'] for c in result.content if c['type'] == 'tool_use'][0]
+    
+    return modified_plan
 
 
 #   formulate
@@ -117,10 +123,10 @@ Your expertise is in formulating plans to complete tasks related to baseball dat
 Before creating the plan, do some analysis within <thinking></thinking> tags.
 </instructions>
 
-Text between the <functions></functions> tags is the list of pybaseball functions you may use, along with their documentation.
-<functions>
-{functions_string}
-</functions>
+Text between the <libraries></libraries> tags is the list of pybaseball libraries you may use, along with their documentation.
+<libraries>
+{libraries_string}
+</libraries>
 
 Text between the <similar_task></similar_task> tags is an example of a similar task to what you are being asked to evaluate.
 <similar_task>
@@ -146,17 +152,35 @@ Text between the <rules></rules> tags are rules that must be followed.
 '''
 
 def formulate_initial_plan(task, existing_plan, similar_task, langchain_config):
-    '''Used to revise the propsed plan based on User feedback'''
+    """
+    Formulate an initial plan to solve the user's task. 
+
+    Arguments:
+        - task (str): task from the user to be solved
+        - existing_plan (str): plan associated with the nearest task
+        - similar_task (str): nearest plan from the semanitic search
+        - langchain_config (dict): configuration for the language model
+
+    Returns:
+        - initial_plan (str): Plan generated to solve the task
+        - pybaseball_libraries (list): List of pybaseball libraries used in the plan
+    """
+    
     initial_prompt = ChatPromptTemplate.from_messages([
         ("system", INITIAL_PLAN_SYSTEM_PROMPT),
-        ("user", "{task}"), 
+        ("user", "{task}.  Use InitialPlan to describe the plan."), 
     ])
 
     initial_plan_chain = initial_prompt | llm_initial_plan 
 
-    result = initial_plan_chain.invoke({'task':task, 'existing_plan':existing_plan, 'similar_task':similar_task, 'functions_string': functions_string}, config=langchain_config)
+    result = initial_plan_chain.invoke({'task':task, 'existing_plan':existing_plan, 'similar_task':similar_task, 'libraries_string': libraries_string}, config=langchain_config)
+    
+    # parse the tool response
+    initial_plan = [c['input']['properties']['plan'] for c in result.content if c['type'] == 'tool_use'][0]
+    pybaseball_libraries = [c['input']['properties']['libraries'] for c in result.content if c['type'] == 'tool_use'][0]
+    pybaseball_libraries = [f['library'] for f in pybaseball_libraries]
 
-    return result
+    return initial_plan, pybaseball_libraries
 
 
 #   update
@@ -191,14 +215,17 @@ def update_plan(task, current_plan, helper_string, langchain_config):
     
     update_prompt = ChatPromptTemplate.from_messages([
         ("system", UPDATE_SYSTEM_PROMPT),
-        ("user", "Review the current plan and make any updates necessary to ensure the correct attributes are being passed to the pybaseball functinons."), 
+        ("user", "Review the current plan and make any updates necessary to ensure the correct attributes are being passed to the pybaseball functinons.  Use UpdatedPlan to describe the plan."), 
     ])
 
     update_chain = update_prompt | llm_update 
     
     result = update_chain.invoke({'task':task, 'current_plan':current_plan, 'helper_string':helper_string}, config=langchain_config)
     
-    return result.plan + '\n\nAre you satisfied with this plan?'
+    # parse tool response
+    updated_plan = [c['input']['plan'] for c in result.content if c['type'] == 'tool_use'][0]
+    
+    return updated_plan + '\n\nAre you satisfied with this plan?'
 
 
 # main function
@@ -252,14 +279,14 @@ def node(state):
         print('Formulating a new plan based on User input')
         
         # forumalte an initial plan
-        initial_plan = formulate_initial_plan(task, nearest_plan, nearest_task, langchain_config)
+        initial_plan, pybaseball_libraries = formulate_initial_plan(task, nearest_plan, nearest_task, langchain_config)
         
         # collect documentation on functions
-        helper_string = collect_function_helpers(initial_plan.functions)
+        helper_string = collect_library_helpers(pybaseball_libraries)
         
         # update plan based on helper string detail
         print('Updating plan based function documentation')
-        updated_plan = update_plan(task, initial_plan.plan, helper_string, langchain_config)
+        updated_plan = update_plan(task, initial_plan, helper_string, langchain_config)
         
         messages.append(AIMessage(content=updated_plan))
 
