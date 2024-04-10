@@ -8,8 +8,6 @@ def node(state):
     task = state['task']
     function_detail = state['function_detail']
     session_id = state['session_id']
-    
-
 
     inputs = {"plan": plan, "task": task, "function_detail":function_detail, "session_id": session_id, 'messages':[], 'successful_code': []}
 

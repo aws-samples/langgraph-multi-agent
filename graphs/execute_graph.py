@@ -2,7 +2,7 @@
 from typing import TypedDict
 
 # langchain
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, BaseMessage
 from langgraph.graph import END, StateGraph
 
 # custom libraries
@@ -16,7 +16,7 @@ class ExecuteState(TypedDict):
         keys: A dictionary where each key is a string.
     """
     # The 'messages' attribute keeps track of the conversation history for the execution
-    messages: list
+    messages: list[BaseMessage]
     # the 'session_id' keeps track of the conversation and is used for Langsmith Threads
     session_id: str
     # The 'plan' field collects the execution plan
@@ -44,7 +44,7 @@ def decide_to_finish(state):
     """
     # Each turn of the execution graph should result in one of two tool calls
     if state['generation_result'].response_metadata['stop_reason'] == 'tool_use':
-        selected_tool = state['generation_result'].content[1]['name']
+        selected_tool = [c['name'] for c in state['generation_result'].content if c['type'] == 'tool_use'][0]
         if selected_tool == 'FinalAnswer':
             return "end"
         elif selected_tool == 'PythonREPL':

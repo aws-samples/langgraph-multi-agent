@@ -7,14 +7,11 @@ from typing import List
 # langchain libraries
 from langchain_anthropic import ChatAnthropic
 from langchain_community.chat_models import BedrockChat
-from langchain_core.messages import HumanMessage, AIMessage
-from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import AIMessage
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_core.runnables import RunnableLambda
 
 from langchain_experimental.tools import PythonREPLTool
-
 
 python_repl = PythonREPLTool()
 
@@ -35,7 +32,7 @@ for key in function_dict:
     docs = function_dict[key]['docs']
     functions_string += f'<{key}>\n{docs}\n</{key}>\n'
     
-    # Define data models
+# Define data models
 class ModifiedPlan(BaseModel):
     """Modify a plan"""
     plan: str = Field(description="The modified plan after making changes requested by the user.")
@@ -53,6 +50,7 @@ class UpdatedPlan(BaseModel):
     """Update a plan"""
     plan: str = Field(description="The updated plan after making any updates necessary to ensure the correct attributes are passed to each of the pybasell functions.")
 
+# define language models
 llm_haiku = ChatAnthropic(model='claude-3-haiku-20240307', temperature=0)
 llm_sonnet = ChatAnthropic(model='claude-3-sonnet-20240229', temperature=0)
 llm_opus = ChatAnthropic(model='claude-3-opus-20240229', temperature=0)
