@@ -46,11 +46,11 @@ def get_execution_plan_collection():
         uuid = str(hash(task))
         plan = steps_table['plan'][i]
         code = steps_table['code'][i]
-
+        function_detail = steps_table['function_detail'][i]
 
         uuid_list.append(uuid)
         task_list.append(task)
-        metadata_list.append({"plan": plan, "code": code})
+        metadata_list.append({"plan": plan, "code": code, 'function_detail': function_detail})
 
     # add texts to collection
     collection.add(

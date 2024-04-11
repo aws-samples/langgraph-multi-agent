@@ -29,9 +29,9 @@ def node(state):
     distance = closest_plan['distances'][0][0]
     nearest_plan = closest_plan['metadatas'][0][0]['plan']
     nearest_code = closest_plan['metadatas'][0][0]['code']
+    function_detail = closest_plan['metadatas'][0][0]['function_detail']
     nearest_task = closest_plan['documents'][0][0]
     
-
     print(f'Distance to neareast plan: {distance}')
 
     # write task and distance to disk
@@ -54,6 +54,7 @@ def node(state):
             "nearest_plan": nearest_plan, 
             "nearest_task": nearest_task, 
             "nearest_code": nearest_code,
+            "function_detail": function_detail,
             "task": task, 
             "previous_node": "Retrieve"}
             

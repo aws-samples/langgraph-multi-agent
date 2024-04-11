@@ -35,8 +35,6 @@ class OrchestrateState(TypedDict):
     code: str
     # The 'function_detail' field collects details on the pybaseball functions in use
     function_detail: str
-    # The 'pybaseball_libraries' field collects pybaseball libraries used in the plan 
-    pybaseball_libraries: str
     # The 'nearest_task' field collect the most semantically similar task
     nearest_task: str
     # The 'nearest_plan' field collect the plan for the most semantically similar task

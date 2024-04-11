@@ -4,7 +4,7 @@ import pandas as pd
 from langchain_core.messages import AIMessage
 
 
-def commit_to_memory(task: str, updated_plan: str, code: str) -> dict:
+def commit_to_memory(task: str, updated_plan: str, code: str, function_detail: str) -> dict:
     "Use this tool when you need to commit a task to memory"
 
     execution_plan_path = 'vectordb/execution_plan.csv'
@@ -17,12 +17,12 @@ def commit_to_memory(task: str, updated_plan: str, code: str) -> dict:
         distance = result['distances'][0][0]
 
         if distance > .01: # add new task
-            steps_df.loc[len(steps_df.index)] = [task, updated_plan, code]
+            steps_df.loc[len(steps_df.index)] = [task, updated_plan, code, function_detail]
             response = 'Thank you, task has been commited to memory'
         else: # update existing task
             same_task = result['documents'][0][0]
             same_task_index = steps_df.index[steps_df['task'] == same_task].tolist()[0]
-            steps_df.loc[same_task_index] = [task, updated_plan, code]
+            steps_df.loc[same_task_index] = [task, updated_plan, code, function_detail]
             response = 'Thank you, task has been updated in memory'
 
         steps_df.to_csv(execution_plan_path, index=False)
@@ -38,9 +38,10 @@ def node(state):
     task = state['task']
     updated_plan = state['plan']
     code = state['code']
+    function_detail = state['function_detail']
 
     # commit
-    response = commit_to_memory(task=task, updated_plan=updated_plan, code=code)
+    response = commit_to_memory(task=task, updated_plan=updated_plan, code=code, function_detail=function_detail)
 
     return {"messages": [AIMessage(content=response)], 
             "previous_node": "Memorize"

@@ -30,7 +30,7 @@ class ExecuteState(TypedDict):
     # The 'successful_code' field collects the successfully executed code
     successful_code: list
     # The 'nearest_plan' field collect the plan for the most semantically similar task
-    nearest_plan: str
+    #nearest_plan: str
     # The 'nearest_code' field collect the code for the most semantically similar task
     nearest_code: str
     

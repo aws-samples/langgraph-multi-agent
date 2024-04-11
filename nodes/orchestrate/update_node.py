@@ -41,35 +41,16 @@ Text between the <current_plan></current_plan> tags is the current plan to be mo
 {current_plan}
 </current_plan>
 
-Text bewteen the <helper_string></helper_string> tags documentation on the pybaseball functions in use
-<helper_string>
-{helper_string}
-</helper_string>
+Text bewteen the <function_detail></function_detail> tags documentation on the pybaseball functions in use
+<function_detail>
+{function_detail}
+</function_detail>
 
 Make any updates necessary to ensure the correct attributes are being passed to each of the pybaseball functions.
 '''
 
 
-def collect_library_helpers(libraries):
-    '''
-    Collect pybaseball library documentation
-    '''
-    
-    print(f'Collecting documentation for {libraries}')
-    lib_list =[i.strip() for i in libraries.split(',')]
-    
-    helper_string = ''
-    for lib in lib_list:
-        lib_detail = library_dict[lib]
-        docs = lib_detail['docs']
-        #data_dictionary = lib_detail['data_dictionary']
-        helper_string += f'Text between the <{lib}_documentation></{lib}_documentation> tags is documentation for the {lib} library.  Consult this section to confirm which attributes to pass into the {lib} library.\n<{lib}_documentation>\n{docs}\n</{lib}_documentation>\n'
-        #helper_string += f'Text between the <{lib}_dictionary></{lib}_dictionary> tags is the data dictionary for the {lib} library.  Consult this section to confirm which columns are present in the response from the {lib} library.\n<{lib}_dictionary>\n{data_dictionary}\n</{lib}_dictionary>'
-
-    return helper_string
-
-
-def update_plan(task, current_plan, helper_string, langchain_config):
+def update_plan(task, current_plan, function_detail, langchain_config):
     '''Used to revise the propsed plan based on function documentation'''
     
     update_prompt = ChatPromptTemplate.from_messages([
@@ -79,7 +60,7 @@ def update_plan(task, current_plan, helper_string, langchain_config):
 
     update_chain = update_prompt | llm_update 
     
-    result = update_chain.invoke({'task':task, 'current_plan':current_plan, 'helper_string':helper_string}, config=langchain_config)
+    result = update_chain.invoke({'task':task, 'current_plan':current_plan, 'function_detail':function_detail}, config=langchain_config)
     
     # parse tool response
     updated_plan = [c['input']['plan'] for c in result.content if c['type'] == 'tool_use'][0]
@@ -93,19 +74,15 @@ def node(state):
     task = state['task']
     session_id = state['session_id']
     messages = state['messages']
-    helper_string = state['function_detail']
     plan = state['plan']
-    pybaseball_libraries = state['pybaseball_libraries']
+    function_detail = state['function_detail']
     
     # create langchain config
     langchain_config = {"metadata": {"conversation_id": session_id}}
-    
-    # collect documentation on functions
-    helper_string = collect_library_helpers(pybaseball_libraries)
         
     # update plan based on helper string detail
     print('Updating plan based function documentation')
-    updated_plan = update_plan(task, plan, helper_string, langchain_config)
+    updated_plan = update_plan(task, plan, function_detail, langchain_config)
     
     messages.append(AIMessage(content=updated_plan))
 

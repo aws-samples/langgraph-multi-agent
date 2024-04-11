@@ -29,6 +29,24 @@ llm_opus = ChatAnthropic(model='claude-3-opus-20240229', temperature=0)
 
 llm_initial_plan = llm_opus.bind_tools([InitialPlan])
 
+def collect_library_helpers(libraries):
+    '''
+    Collect pybaseball library documentation
+    '''
+    
+    print(f'Collecting documentation for {libraries}')
+    lib_list =[i.strip() for i in libraries.split(',')]
+    
+    helper_string = ''
+    for lib in lib_list:
+        lib_detail = library_dict[lib]
+        docs = lib_detail['docs']
+        #data_dictionary = lib_detail['data_dictionary']
+        helper_string += f'Text between the <{lib}_documentation></{lib}_documentation> tags is documentation for the {lib} library.  Consult this section to confirm which attributes to pass into the {lib} library.\n<{lib}_documentation>\n{docs}\n</{lib}_documentation>\n'
+        #helper_string += f'Text between the <{lib}_dictionary></{lib}_dictionary> tags is the data dictionary for the {lib} library.  Consult this section to confirm which columns are present in the response from the {lib} library.\n<{lib}_dictionary>\n{data_dictionary}\n</{lib}_dictionary>'
+
+    return helper_string
+
 #   formulate
 INITIAL_PLAN_SYSTEM_PROMPT = '''
 <instructions>You are a world-class Python programmer and an expert on baseball, with a specialization in data analysis using the pybaseball Python library. 
@@ -83,8 +101,7 @@ def formulate_initial_plan(task, existing_plan, similar_task, langchain_config):
     initial_plan_chain = initial_prompt | llm_initial_plan 
 
     result = initial_plan_chain.invoke({'task':task, 'existing_plan':existing_plan, 'similar_task':similar_task, 'libraries_string': libraries_string}, config=langchain_config)
-    print('INITIAL CHAIN RESULT')
-    print(result)
+
     # parse the tool response
     initial_plan = [c['input']['plan'] for c in result.content if c['type'] == 'tool_use'][0]
     pybaseball_libraries = [c['input']['libraries'] for c in result.content if c['type'] == 'tool_use'][0]
@@ -109,8 +126,11 @@ def node(state):
     # forumalte an initial plan
     initial_plan, pybaseball_libraries = formulate_initial_plan(task, nearest_plan, nearest_task, langchain_config)
     
+    # collect documentation on functions
+    helper_string = collect_library_helpers(pybaseball_libraries)
+    
     return {"plan": initial_plan,
             "previous_node": "Initialize",
-            'pybaseball_libraries': pybaseball_libraries
+            'function_detail': helper_string
         }
             

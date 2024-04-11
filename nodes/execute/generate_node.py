@@ -27,12 +27,7 @@ llm_with_tools = llm.bind_tools([PythonREPL, FinalAnswer])
 # Prompt
 GENERATE_SYSTEM_PROMPT = '''<instructions>You are a highly skilled Python programmer.  Your goal is to help a user execute a plan by writing code for the PythonREPL tool.</instructions>
 
-As a reference, text between the <nearest_plan></nearest_plan> tags is a plan similar to the one you are being asked to evaluate.
-<nearest_plan>
-{nearest_plan}
-</nearest_plan>
-
-As a reference, text between the <nearest_code></nearest_code> tags is the code that was used to solve the similar plan referenced above.
+As a reference, text between the <nearest_code></nearest_code> tags is the code that was used to solve a similar plan.
 <nearest_code>
 {nearest_code}
 </nearest_code>
@@ -79,7 +74,7 @@ def node(state):
     messages = state['messages']
     session_id = state['session_id']
     function_detail = state['function_detail']
-    nearest_plan = state['nearest_plan']
+    #nearest_plan = state['nearest_plan']
     nearest_code = state['nearest_code']
     
     # create langchain config
@@ -98,7 +93,7 @@ def node(state):
     generate_prompt_template = ChatPromptTemplate.from_messages([
         ("system", GENERATE_SYSTEM_PROMPT),
         MessagesPlaceholder(variable_name="messages"), 
-    ]).partial(function_detail=function_detail, task=task, plan=plan, nearest_plan=nearest_plan, nearest_code=nearest_code)
+    ]).partial(function_detail=function_detail, task=task, plan=plan, nearest_code=nearest_code) #nearest_plan=nearest_plan,
 
     # define chain
     generate_chain = generate_prompt_template | llm_with_tools
