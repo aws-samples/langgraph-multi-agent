@@ -9,6 +9,7 @@ def node(state):
     function_detail = state['function_detail']
     session_id = state['session_id']
     nearest_code = state['nearest_code']
+    messages = state['messages']
 
     inputs = {"plan": plan, 
               "task": task, 
@@ -19,19 +20,20 @@ def node(state):
               'nearest_code': nearest_code}
 
     for s in execute_graph.graph.stream(inputs, {"recursion_limit": 100}):
-        if "__end__"  in s:
-            print('END')
-            print(s)
+        for key, value in s.items():
+            if key == 'summarize':
+                successful_code = s[key]['successful_code']
+                final_result = s[key]['messages'][-1].content
+                
+                successful_code_string = '\n'.join(successful_code)
+                final_answer = f"{final_result}\n\nHere is the code that was used to reach this solution:\n\n```python\n\n{successful_code_string}\n```"
+                final_answer += '\n\nAre you satisfied with this result?'
+                
+                messages.append(AIMessage(content=final_answer))
+                
+    # update state
+    state['messages'] = messages
+    state['previous_node'] = 'Execute'
+    state['code'] = successful_code_string
 
-            successful_code = s['__end__']['successful_code']
-            final_result = s['__end__']['messages'][-1].content
-    
-            successful_code_string = '\n'.join(successful_code)
-            final_answer = f"{final_result}\n\nHere is the code that was used to reach this solution:\n\n```python\n\n{successful_code_string}\n```"
-            final_answer += '\n\nAre you satisfied with this result?'
-
-    return {"messages": [AIMessage(content=final_answer)], 
-            "previous_node": "Execute", 
-            "code": successful_code_string,
-            'plan': plan
-           }
+    return state

@@ -9,19 +9,9 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 #from langchain_core.pydantic_v1 import BaseModel, Field
     
 
-'''
-# Define data models
-class Summary(BaseModel):
-    """Modify a plan based on feedback from the user"""
-    plan: str = Field(description="The modified plan after making changes requested by the user.")
-'''
-
 # define language models
 llm_haiku = ChatAnthropic(model='claude-3-haiku-20240307', temperature=0)
-#llm_sonnet = ChatAnthropic(model='claude-3-sonnet-20240229', temperature=0)
-#llm_opus = ChatAnthropic(model='claude-3-opus-20240229', temperature=0)
 
-#llm_modify = llm_sonnet.bind_tools([ModifiedPlan])
 llm_summarize = llm_haiku
 
 
@@ -45,9 +35,6 @@ def summarize_results(task, result, langchain_config):
     summarize_chain = summarize_prompt | llm_summarize 
 
     result = summarize_chain.invoke({'task':task, 'result': result}, config=langchain_config)
-
-    # parse tool response
-    #modified_plan = [c['input']['plan'] for c in result.content if c['type'] == 'tool_use'][0]
     
     return result
 
@@ -66,7 +53,10 @@ def node(state):
     summary = summarize_results(task, result,langchain_config)
     
     messages.append(summary)
+    
+    # update state
+    state['messages'] = messages
 
-    return {"messages": messages}
+    return state
 
             

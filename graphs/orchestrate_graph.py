@@ -62,7 +62,7 @@ workflow.add_conditional_edges("Retrieve", lambda x: x["next"], retrieve_map)
 
 workflow.add_edge("Initialize", "Update")
 
-end_nodes = ['Retrieve', 'Modify', 'Update', 'Execute', 'Revise', 'Memorize']
+end_nodes = ['Modify', 'Update', 'Execute', 'Revise', 'Memorize']
 for node in end_nodes:
     workflow.add_edge(node, END)
 

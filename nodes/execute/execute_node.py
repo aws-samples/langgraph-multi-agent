@@ -27,9 +27,10 @@ def node(state):
     messages = state['messages']
     successful_code = state['successful_code']
     
-    # collect tool call metadata   
-    code = [c['input']['code'] for c in messages[-1].content if c['type'] == 'tool_use'][0]
-    tool_call_id = [c['id'] for c in messages[-1].content if c['type'] == 'tool_use'][0]
+    # collect tool call args
+    tool_calls = messages[-1].tool_calls
+    code = [t['args']['code'] for t in tool_calls if t['name'] == 'PythonREPL'][0]
+    tool_call_id = [t['id'] for t in tool_calls if t['name'] == 'PythonREPL'][0]
     
     # create langchain config
     langchain_config = {"metadata": {"conversation_id": session_id}}
@@ -42,13 +43,6 @@ def node(state):
     if result != '':
         print(f'Result: {result}')
     
-    '''
-    if 'error' in result.lower():
-        messages.append(ToolMessage(content=f'The previous step reached an error with the following code:\n\n```python\n{code}\n```\n\nHere was the error: {result}', tool_call_id=tool_call_id))
-    else:
-        messages.append(ToolMessage(content=f'The previous step completed successfully with the following code:\n\n```python\n{code}\n```\n\nHere was the result: {result}', tool_call_id=tool_call_id))
-        successful_code.append(code)
-    '''
     if 'error' in result.lower():
         messages.append(ToolMessage(content=f'The previous code reached an error.  Here was the error: {result}', tool_call_id=tool_call_id))
     else:
@@ -58,5 +52,8 @@ def node(state):
         else:
             messages.append(ToolMessage(content=f'The previous step completed successfully.', tool_call_id=tool_call_id))
         
-        
-    return {'messages': messages, 'successful_code':successful_code}
+    # update state
+    state['messages'] = messages
+    state['successful_code'] = successful_code
+    
+    return state

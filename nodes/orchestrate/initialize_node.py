@@ -103,8 +103,14 @@ def formulate_initial_plan(task, existing_plan, similar_task, langchain_config):
     result = initial_plan_chain.invoke({'task':task, 'existing_plan':existing_plan, 'similar_task':similar_task, 'libraries_string': libraries_string}, config=langchain_config)
 
     # parse the tool response
+    tool_calls = result.tool_calls
+    initial_plan = [t['args']['plan'] for t in tool_calls if t['name'] == 'InitialPlan'][0]
+    pybaseball_libraries = [t['args']['libraries'] for t in tool_calls if t['name'] == 'InitialPlan'][0]
+
+    '''    
     initial_plan = [c['input']['plan'] for c in result.content if c['type'] == 'tool_use'][0]
     pybaseball_libraries = [c['input']['libraries'] for c in result.content if c['type'] == 'tool_use'][0]
+    '''
 
     return initial_plan, pybaseball_libraries
 
@@ -129,8 +135,10 @@ def node(state):
     # collect documentation on functions
     helper_string = collect_library_helpers(pybaseball_libraries)
     
-    return {"plan": initial_plan,
-            "previous_node": "Initialize",
-            'function_detail': helper_string
-        }
+    # update state
+    state['plan'] = initial_plan
+    state['previous_node'] = 'Initialize'
+    state['function_detail'] = helper_string
+    
+    return state
             

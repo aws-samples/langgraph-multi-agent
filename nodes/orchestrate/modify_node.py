@@ -8,12 +8,10 @@ from langchain_core.messages import AIMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
     
-
 # Define data models
 class ModifiedPlan(BaseModel):
     """Modify a plan based on feedback from the user"""
     plan: str = Field(description="The modified plan after making changes requested by the user.")
-
 
 # define language models
 #llm_haiku = ChatAnthropic(model='claude-3-haiku-20240307', temperature=0)
@@ -21,6 +19,7 @@ llm_sonnet = ChatAnthropic(model='claude-3-sonnet-20240229', temperature=0)
 #llm_opus = ChatAnthropic(model='claude-3-opus-20240229', temperature=0)
 
 llm_modify = llm_sonnet.bind_tools([ModifiedPlan])
+
 
 
 MODIFY_SYSTEM_PROMPT = '''
@@ -52,7 +51,8 @@ def modify_existing_plan(task, nearest_task, nearest_plan, langchain_config):
     result = modify_chain.invoke({'existing_plan':nearest_plan, 'original_task': nearest_task, 'updates':task}, config=langchain_config)
 
     # parse tool response
-    modified_plan = [c['input']['plan'] for c in result.content if c['type'] == 'tool_use'][0]
+    tool_calls = result.tool_calls
+    modified_plan = [t['args']['plan'] for t in tool_calls if t['name'] == 'ModifiedPlan'][0]
     
     return modified_plan
 
@@ -73,11 +73,12 @@ def node(state):
     new_plan = modify_existing_plan(task, nearest_task, nearest_plan, langchain_config)
     
     messages.append(AIMessage(content=new_plan))
+    
+    # update state
+    state['messages'] = messages
+    state['plan'] = new_plan
+    state['previous_node'] = 'Modify'
 
-    return {"messages": messages, 
-            "task": task,
-            "plan": new_plan,
-            "previous_node": "Modify"
-        }
+    return state
 
             

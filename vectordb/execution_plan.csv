@@ -31,35 +31,3 @@ rays_wins = rays_2022[(rays_2022['W/L'] == 'W') | (rays_2022['W/L'] == 'W-wo')]
 # 4. Count the number of rows (games won) in the filtered dataframe
 num_wins = len(rays_wins)
 print(f""The Tampa Bay Rays won {num_wins} games in 2022."")",seed_function_detail
-How many games did the royals win in 2012?,"1. Import the schedule_and_record function from pybaseball:
-
-```python
-from pybaseball import schedule_and_record
-```
-
-2. Get the 2012 schedule and results for the Kansas City Royals:
-
-```python
-royals_2012 = schedule_and_record(2012, 'KC')
-```
-
-3. Filter the dataframe to games where the Royals won (W/L == 'W') or had a walk-off win (W/L == 'W-wo'):
-
-```python
-royals_wins = royals_2012[(royals_2012['W/L'] == 'W') | (royals_2012['W/L'] == 'W-wo')]
-```
-
-4. Count the number of rows (games won) in the filtered dataframe:
-
-```python
-num_wins = len(royals_wins)
-print(f""The Kansas City Royals won {num_wins} games in 2012."")
-```","# 1. Import the schedule_and_record function from pybaseball
-from pybaseball import schedule_and_record
-# 2. Get the 2012 schedule and results for the Kansas City Royals
-royals_2012 = schedule_and_record(2012, 'KC')
-# 3. Filter the dataframe to games where the Royals won (W/L == 'W') or had a walk-off win (W/L == 'W-wo')
-royals_wins = royals_2012[(royals_2012['W/L'] == 'W') | (royals_2012['W/L'] == 'W-wo')]
-# 4. Count the number of rows (games won) in the filtered dataframe
-num_wins = len(royals_wins)
-print(f""The Kansas City Royals won {num_wins} games in 2012."")",seed_function_detail

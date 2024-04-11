@@ -72,16 +72,23 @@ def node(state):
 
     # invoke revise chain
     revised = revision_chain.invoke({'plan': plan, 'function_detail': function_detail, 'task': task, 'messages': messages}, config=langchain_config)
+    
     # parse the tool response
-    revised_plan = [c['input']['plan'] for c in revised.content if c['type'] == 'tool_use'][0]
-    task = [c['input']['task'] for c in revised.content if c['type'] == 'tool_use'][0]
+    tool_calls = revised.tool_calls
+    revised_plan = [t['args']['plan'] for t in tool_calls if t['name'] == 'RevisedPlan'][0]
+    task = [t['args']['task'] for t in tool_calls if t['name'] == 'RevisedPlan'][0]
+    
+    #revised_plan = [c['input']['plan'] for c in revised.content if c['type'] == 'tool_use'][0]
+    #task = [c['input']['task'] for c in revised.content if c['type'] == 'tool_use'][0]
     
     revised_plan += '\n\nAre you satisfied with this plan?'
     
     messages.append(AIMessage(content=revised_plan))
     
-    return {"messages": messages, 
-            "plan": revised_plan, 
-            'task': task,
-            "previous_node": "Revise" 
-           }
+    # update state
+    state['plan'] = revised_plan
+    state['previous_node'] = 'Revise'
+    state['task'] = task
+    state['messages'] = messages
+    
+    return state

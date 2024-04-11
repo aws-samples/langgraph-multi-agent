@@ -49,12 +49,15 @@ def node(state):
         next_step = 'Modify'
     else:
         next_step = 'Initialize'
+        
+    # update state
+    state['next'] = next_step
+    state['nearest_plan'] = nearest_plan
+    state['nearest_task'] = nearest_task
+    state['nearest_code'] = nearest_code
+    state['function_detail'] = function_detail
+    state['task'] = task
+    state['previous_node'] = 'Retrieve'
     
-    return {"next": next_step, 
-            "nearest_plan": nearest_plan, 
-            "nearest_task": nearest_task, 
-            "nearest_code": nearest_code,
-            "function_detail": function_detail,
-            "task": task, 
-            "previous_node": "Retrieve"}
+    return state
             

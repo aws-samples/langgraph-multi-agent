@@ -31,18 +31,19 @@ def execute_workflow(task, session_id):
         
     # execute
     for s in orchestrate_graph.graph.stream(state_dict[session_id]):
-        if "__end__" not in s:
-            print(s)
-            print("----")
+        print(s)
+        print("----")
             
     # update state
-    state_dict[session_id] = s['__end__'] 
+    key = list(s.keys())[0] # key will be most recently executed node
+    state_dict[session_id] = s[key] 
+
     
     # write to disk
     with open(state_dict_path, 'wb') as file:
         pickle.dump(state_dict, file)
     
     # collect response
-    last_message = s['__end__']['messages'][-1].content
+    last_message = s[key]['messages'][-1].content
     
     return last_message

@@ -11,7 +11,8 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 
 with open('state/functions.json', 'r') as file:
     library_dict = json.load(file)
-    
+
+
 class UpdatedPlan(BaseModel):
     """Update a plan based on pybaseball library documentation"""
     plan: str = Field(description="The updated plan after making any updates necessary to ensure the correct attributes are passed to each of the pybasell functions.")
@@ -63,7 +64,10 @@ def update_plan(task, current_plan, function_detail, langchain_config):
     result = update_chain.invoke({'task':task, 'current_plan':current_plan, 'function_detail':function_detail}, config=langchain_config)
     
     # parse tool response
-    updated_plan = [c['input']['plan'] for c in result.content if c['type'] == 'tool_use'][0]
+    tool_calls = result.tool_calls
+    updated_plan = [t['args']['plan'] for t in tool_calls if t['name'] == 'UpdatedPlan'][0]
+    
+    #updated_plan = [c['input']['plan'] for c in result.content if c['type'] == 'tool_use'][0]
     
     return updated_plan + '\n\nAre you satisfied with this plan?'
 
@@ -85,10 +89,11 @@ def node(state):
     updated_plan = update_plan(task, plan, function_detail, langchain_config)
     
     messages.append(AIMessage(content=updated_plan))
-
-    return {"messages": messages,
-            "task": task,
-            "plan": updated_plan,
-            "previous_node": "Update"
-        }
+    
+    # update state
+    state['messages'] = messages
+    state['plan' ] = updated_plan
+    state['previous_node'] = 'Update'
+    
+    return state
             

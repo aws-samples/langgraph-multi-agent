@@ -43,7 +43,7 @@ def decide_to_finish(state):
         str: Next node to call
     """
     # Determine whether there is a tool use call
-    if state['messages'][-1].response_metadata['stop_reason'] == 'tool_use':
+    if state['messages'][-1].tool_calls:
         return "execute"
     else:
         return "summarize"

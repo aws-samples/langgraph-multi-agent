@@ -93,5 +93,8 @@ def node(state):
     result = generate_chain.invoke({"messages": messages}, config=langchain_config)
     
     messages.append(result) # AIMessage type
+    
+    # update state
+    state['messages'] = messages
 
-    return {'messages': messages}
+    return state
