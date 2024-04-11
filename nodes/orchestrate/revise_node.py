@@ -78,9 +78,6 @@ def node(state):
     revised_plan = [t['args']['plan'] for t in tool_calls if t['name'] == 'RevisedPlan'][0]
     task = [t['args']['task'] for t in tool_calls if t['name'] == 'RevisedPlan'][0]
     
-    #revised_plan = [c['input']['plan'] for c in revised.content if c['type'] == 'tool_use'][0]
-    #task = [c['input']['task'] for c in revised.content if c['type'] == 'tool_use'][0]
-    
     revised_plan += '\n\nAre you satisfied with this plan?'
     
     messages.append(AIMessage(content=revised_plan))

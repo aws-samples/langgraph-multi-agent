@@ -33,7 +33,7 @@ def node(state):
                 successful_code = s[key]['successful_code']
                 final_result = s[key]['messages'][-1].content
                 
-                successful_code_string = '\n'.join(successful_code)
+                successful_code_string = '\n\n'.join(successful_code)
                 final_answer = f"{final_result}\n\nHere is the code that was used to reach this solution:\n\n```python\n\n{successful_code_string}\n```"
                 final_answer += '\n\nAre you satisfied with this result?'
                 

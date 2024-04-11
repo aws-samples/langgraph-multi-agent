@@ -107,11 +107,6 @@ def formulate_initial_plan(task, existing_plan, similar_task, langchain_config):
     initial_plan = [t['args']['plan'] for t in tool_calls if t['name'] == 'InitialPlan'][0]
     pybaseball_libraries = [t['args']['libraries'] for t in tool_calls if t['name'] == 'InitialPlan'][0]
 
-    '''    
-    initial_plan = [c['input']['plan'] for c in result.content if c['type'] == 'tool_use'][0]
-    pybaseball_libraries = [c['input']['libraries'] for c in result.content if c['type'] == 'tool_use'][0]
-    '''
-
     return initial_plan, pybaseball_libraries
 
 

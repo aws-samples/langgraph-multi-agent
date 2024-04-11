@@ -67,8 +67,6 @@ def update_plan(task, current_plan, function_detail, langchain_config):
     tool_calls = result.tool_calls
     updated_plan = [t['args']['plan'] for t in tool_calls if t['name'] == 'UpdatedPlan'][0]
     
-    #updated_plan = [c['input']['plan'] for c in result.content if c['type'] == 'tool_use'][0]
-    
     return updated_plan + '\n\nAre you satisfied with this plan?'
 
 
