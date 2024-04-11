@@ -3,7 +3,6 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import AIMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_core.runnables import RunnableLambda
 
 
 # Define data models

@@ -13,16 +13,11 @@ llm = ChatAnthropic(model=opus_model_id, temperature=0)
 
 # define tools
 class PythonREPL(BaseModel):
-    """A Python REPL that can be used to executed Python code"""
+    """A Python REPL that can be used to execute Python code"""
     code: str = Field(description="Code block to be executed in a Python REPL")
     
-class FinalAnswer(BaseModel):
-    """Collects the final answer once the entire execution plan has been executed.  Always use this tool after the entire plan has been executed successfully."""
-    answer: str = Field(description="The answer to the user's task.")
-    plan: str = Field(description="An updated plan after any changes that were necessary during execution.  This plan should be identical to the original plan except updated with any changes that were necessary during execution.")
-
 # bind tools to model
-llm_with_tools = llm.bind_tools([PythonREPL, FinalAnswer])
+llm_with_tools = llm.bind_tools([PythonREPL])
 
 # Prompt
 GENERATE_SYSTEM_PROMPT = '''<instructions>You are a highly skilled Python programmer.  Your goal is to help a user execute a plan by writing code for the PythonREPL tool.</instructions>
@@ -54,6 +49,9 @@ Text between the <rules></rules> tags are rules that must be followed.
 3. When executing the last step of the plan, use a print() statement to describe the results.
 4. Comment your code liberally to be clear about what is happening and why.
 </rules>
+
+Execute the entire plan, one step at a time, by writing code with the PythonREPL tool.  Troubleshoot any errors you encounter along the way.
+You must complete each step successfully before moving on to the next step.  Before generating any code, do some thinking between <thinking></thinking> tags.
 '''
 
 def node(state):
@@ -74,26 +72,20 @@ def node(state):
     messages = state['messages']
     session_id = state['session_id']
     function_detail = state['function_detail']
-    #nearest_plan = state['nearest_plan']
     nearest_code = state['nearest_code']
     
     # create langchain config
     langchain_config = {"metadata": {"conversation_id": session_id}}
     
-    # determine the next set of messages
-    convert_message = 'Convert the next step of the plan into code that can be executed in a Python REPL.  Use the PythonREPL tool in your response.'
-    troubleshoot_message = 'What information would be useful in order to troubleshoot this error?  Write Python code that can be executed in a python repl to confirm this information.  Use the PythonREPL tool in your response.'
-
-    if len(messages) > 0 and messages[-1].content[:34] == 'The previous step reached an error':
-        messages.append(HumanMessage(content=troubleshoot_message))
-    else:
-        messages.append(HumanMessage(content=convert_message))
+    # kick off the conversation of necessary   
+    if len(messages) == 0:
+        messages.append(HumanMessage(content='Begin!'))
     
     # define prompt template
     generate_prompt_template = ChatPromptTemplate.from_messages([
         ("system", GENERATE_SYSTEM_PROMPT),
         MessagesPlaceholder(variable_name="messages"), 
-    ]).partial(function_detail=function_detail, task=task, plan=plan, nearest_code=nearest_code) #nearest_plan=nearest_plan,
+    ]).partial(function_detail=function_detail, task=task, plan=plan, nearest_code=nearest_code) 
 
     # define chain
     generate_chain = generate_prompt_template | llm_with_tools
@@ -102,4 +94,4 @@ def node(state):
     
     messages.append(result) # AIMessage type
 
-    return {"generation_result": result, 'messages': messages}
+    return {'messages': messages}
