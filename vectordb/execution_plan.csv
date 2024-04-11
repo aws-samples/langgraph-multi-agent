@@ -1,59 +1,119 @@
 task,plan,code
-dummy,dummy,dummy
-How many games did the Rays win in 2010?,"Step 1: Import the pybaseball library and the schedule_and_record function.
+How many games did the Rays win in 2022?,"1. Import the schedule_and_record function from pybaseball:
 
-import pybaseball
-from pybaseball import schedule_and_record  
-
-Step 2: Call the schedule_and_record function to get the 2010 Rays game results.
-
-rays_2010 = schedule_and_record(2010, 'TB')
-
-Step 3: Filter the dataframe to include games where the Rays won (W) or had a walk-off win (W-wo).  
-
-rays_wins = rays_2010[rays_2010['W/L'].isin(['W', 'W-wo'])]
-
-Step 4: Count the number of rows in the filtered dataframe to get the total wins including walk-offs.
-
-total_wins = len(rays_wins)  
-
-Step 5: Print out the total wins for the 2010 Rays season including walk-offs.
-
-print(f'The Tampa Bay Rays won {total_wins} games in the 2010 season including walk-off wins.')","# Step 1: Import the pybaseball library and the schedule_and_record function
-import pybaseball
+```python
 from pybaseball import schedule_and_record
+```
 
-# Step 2: Call the schedule_and_record function to get the 2010 Rays game results
-rays_2010 = schedule_and_record(2010, 'TB')
-# Step 3: Filter the dataframe to include games where the Rays won (W) or had a walk-off win (W-wo)
-rays_wins = rays_2010[rays_2010['W/L'].isin(['W', 'W-wo'])]
-# Step 4: Count the number of rows in the filtered dataframe to get the total wins including walk-offs
-total_wins = len(rays_wins)
-# Step 5: Print out the total wins for the 2010 Rays season including walk-offs
-print(f'The Tampa Bay Rays won {total_wins} games in the 2010 season including walk-off wins.')"
-How many games did the Braves win in 2022?,"Step 1: Import the pybaseball library and the schedule_and_record function.
+2. Get the 2022 schedule and results for the Tampa Bay Rays:
 
-import pybaseball
-from pybaseball import schedule_and_record  
+```python
+rays_2022 = schedule_and_record(2022, 'TB')
+```
 
-Step 2: Call the schedule_and_record function to get the 2022 Braves game results.
+3. Filter the dataframe to games where the Rays won (W/L == 'W') or had a walk-off win (W/L == 'W-wo'):
 
-braves_2022 = schedule_and_record(2022, 'ATL')
+```python
+rays_wins = rays_2022[(rays_2022['W/L'] == 'W') | (rays_2022['W/L'] == 'W-wo')]
+```
 
-Step 3: Filter the dataframe to include games where the Braves won (W) or had a walk-off win (W-wo).  
+4. Count the number of rows (games won) in the filtered dataframe:
 
-braves_wins = braves_2022[braves_2022['W/L'].isin(['W', 'W-wo'])]
-
-Step 4: Count the number of rows in the filtered dataframe to get the total wins including walk-offs.
-
-total_wins = len(braves_wins)  
-
-Step 5: Print out the total wins for the 2022 Braves season including walk-offs.
-
-print(f'The Atlanta Braves won {total_wins} games in the 2022 season including walk-off wins.')","import pybaseball
+```python
+num_wins = len(rays_wins)
+print(f""The Tampa Bay Rays won {num_wins} games in 2022."")
+```","# 1. Import the schedule_and_record function from pybaseball
 from pybaseball import schedule_and_record
+# 2. Get the 2022 schedule and results for the Tampa Bay Rays
+rays_2022 = schedule_and_record(2022, 'TB')
+# 3. Filter the dataframe to games where the Rays won (W/L == 'W') or had a walk-off win (W/L == 'W-wo')
+rays_wins = rays_2022[(rays_2022['W/L'] == 'W') | (rays_2022['W/L'] == 'W-wo')]
+# 4. Count the number of rows (games won) in the filtered dataframe
+num_wins = len(rays_wins)
+print(f""The Tampa Bay Rays won {num_wins} games in 2022."")"
+How many home runs did Derek Jeter hit in 2008?,"Here is the updated plan with the code used:
 
-braves_2022 = schedule_and_record(2022, 'ATL')
-braves_wins = braves_2022[braves_2022['W/L'].isin(['W', 'W-wo'])]
-total_wins = len(braves_wins)
-print(f'The Atlanta Braves won {total_wins} games in the 2022 season including walk-off wins.')"
+1. Import the statcast_batter and playerid_lookup functions from pybaseball:
+
+```python
+from pybaseball import statcast_batter, playerid_lookup
+```
+
+2. Look up Derek Jeter's MLBAM player ID using fuzzy matching:
+
+```python 
+jeter_id = playerid_lookup('jeter', 'derek', fuzzy=True)
+jeter_mlbam_id = jeter_id['key_mlbam'][0]  
+```
+
+3. Get Derek Jeter's statcast batting data for the 2008 season:
+
+```python
+jeter_2008_data = statcast_batter('2008-01-01', '2008-12-31', player_id=jeter_mlbam_id)
+```
+
+4. Filter to only pitches that resulted in home runs and count the number of rows:
+
+```python
+# Filter to only pitches that resulted in home runs
+jeter_2008_hr = jeter_2008_data[jeter_2008_data['events'] == 'home_run']
+
+# Count the number of home runs
+hr_count = len(jeter_2008_hr) 
+
+# Print the result
+print(f""Derek Jeter hit {hr_count} home runs in the 2008 season."")
+```","from pybaseball import statcast_batter, playerid_lookup
+jeter_id = playerid_lookup('jeter', 'derek', fuzzy=True)  
+jeter_mlbam_id = jeter_id['key_mlbam'][0]
+jeter_2008_data = statcast_batter('2008-01-01', '2008-12-31', player_id=jeter_mlbam_id)
+# Filter to only pitches that resulted in home runs
+jeter_2008_hr = jeter_2008_data[jeter_2008_data['events'] == 'home_run']
+
+# Count the number of home runs 
+hr_count = len(jeter_2008_hr)
+
+# Print the result
+print(f""Derek Jeter hit {hr_count} home runs in the 2008 season."")"
+How many doubles did Whit Merrifield hit in 2019?,"1. Import the statcast_batter and playerid_lookup functions from pybaseball:
+
+```python
+from pybaseball import statcast_batter, playerid_lookup
+```
+
+2. Look up Whit Merrifield's MLBAM player ID using fuzzy matching:
+
+```python
+merrifield_id = playerid_lookup('merrifield', 'whit', fuzzy=True)
+merrifield_mlbam_id = merrifield_id['key_mlbam'][0]
+```
+
+3. Get Whit Merrifield's statcast batting data for the 2019 season:
+
+```python
+merrifield_2019_data = statcast_batter('2019-01-01', '2019-12-31', player_id=merrifield_mlbam_id)
+```
+
+4. Filter to only pitches that resulted in doubles and count the number:
+
+```python
+# Filter to only pitches that resulted in doubles
+merrifield_2019_doubles = merrifield_2019_data[merrifield_2019_data['events'] == 'double']
+
+# Count the number of doubles 
+doubles_count = len(merrifield_2019_doubles)
+
+# Print the result
+print(f""Whit Merrifield hit {doubles_count} doubles in the 2019 season."")
+```","from pybaseball import statcast_batter, playerid_lookup
+merrifield_id = playerid_lookup('merrifield', 'whit', fuzzy=True)
+merrifield_mlbam_id = merrifield_id['key_mlbam'][0]
+merrifield_2019_data = statcast_batter('2019-01-01', '2019-12-31', player_id=merrifield_mlbam_id)
+# Filter to only pitches that resulted in doubles
+merrifield_2019_doubles = merrifield_2019_data[merrifield_2019_data['events'] == 'double']
+
+# Count the number of doubles
+doubles_count = len(merrifield_2019_doubles)
+
+# Print the result 
+print(f""Whit Merrifield hit {doubles_count} doubles in the 2019 season."")"

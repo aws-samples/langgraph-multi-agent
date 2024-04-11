@@ -1,12 +1,7 @@
-from dotenv import load_dotenv, find_dotenv
-import os
-
 from langchain_core.messages import AIMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.chat_models import BedrockChat
 
-# read local .env file
-_ = load_dotenv(find_dotenv()) 
 
 # define language model
 #model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
@@ -14,19 +9,17 @@ model_id = 'anthropic.claude-3-haiku-20240307-v1:0'
 llm = BedrockChat(model_id=model_id, model_kwargs={'temperature': 0})
 
 POS_FEEDBACK_SYSTEM_PROMPT = '''
-A user has been provided with a plan and asked if they approve.  Your job is to review their feedback and respond in one of two ways:
+If the user's message can be understood as positive affirmation with no additional information or clarifications, respond Y.
+If there is any additional information in the user's message beyond a single positive affirmation, respond N.
 
-- If the user requests a modification, respond with N
-- If the user explicitly expresses approval, respond with Y
+Examples of positive affirmation may include but are not limited to "yes", "yep", "looks good", "great", "perfect"
 
-If there is any additional feedback provided by the user beyond an explicit approval, you must respond with N.
-
-Respond ONLY with either Y or N.
+Respond ONLY with either Y or N
 '''
 
 pos_feedback_prompt_template = ChatPromptTemplate.from_messages([
     ("system", POS_FEEDBACK_SYSTEM_PROMPT),
-    MessagesPlaceholder(variable_name="messages"), 
+    ("user", "{message}")
 ])
 
 pos_feedback_chain = pos_feedback_prompt_template | llm
@@ -39,7 +32,7 @@ def get_pos_feedback_indicator(state):
     # create langchain config
     langchain_config = {"metadata": {"conversation_id": session_id}}
     
-    response = pos_feedback_chain.invoke({'messages':last_message}, config=langchain_config)
+    response = pos_feedback_chain.invoke({'message':last_message}, config=langchain_config)
     response = response.content.lower().strip()
 
     if response in ['y', 'n']:
@@ -54,8 +47,8 @@ def node(state):
     previous_node = state['previous_node']
 
     if previous_node == None:
-        return {'next': 'Plan'}
-    elif previous_node in ['Plan', 'Revise']:
+        return {'next': 'Retrieve'}
+    elif previous_node in ['Update', 'Revise', 'Modify']:
         pos_feedback_indicator = get_pos_feedback_indicator(state)
 
         if pos_feedback_indicator == 'n':

@@ -8,8 +8,17 @@ def node(state):
     task = state['task']
     function_detail = state['function_detail']
     session_id = state['session_id']
+    nearest_plan = state['nearest_plan']
+    nearest_code = state['nearest_code']
 
-    inputs = {"plan": plan, "task": task, "function_detail":function_detail, "session_id": session_id, 'messages':[], 'successful_code': []}
+    inputs = {"plan": plan, 
+              "task": task, 
+              "function_detail": function_detail, 
+              "session_id": session_id, 
+              'messages':[], 
+              'successful_code': [], 
+              'nearest_plan': nearest_plan,
+              'nearest_code': nearest_code}
 
     for s in execute_graph.graph.stream(inputs, {"recursion_limit": 100}):
         if "__end__"  in s:

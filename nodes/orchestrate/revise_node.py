@@ -1,25 +1,14 @@
-from dotenv import load_dotenv, find_dotenv
-
-from langchain_community.chat_models import BedrockChat
+#from langchain_community.chat_models import BedrockChat
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import AIMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda
 
-# read local .env file
-_ = load_dotenv(find_dotenv()) 
-
-'''
-# define language model
-model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
-#model_id = 'anthropic.claude-3-haiku-20240307-v1:0'
-llm = BedrockChat(model_id=model_id, model_kwargs={'temperature': 0})
-'''
 
 # Define data models
 class RevisedPlan(BaseModel):
-    """Revise a plan"""
+    """Structured output for the revised plan"""
     plan: str = Field(description="The revised plan after making changes requested by the user.")
     task: str = Field(description="The revised task after making changes requested by the user.  If there are no changes to the task, this will be the same as the original task")
     
@@ -29,7 +18,7 @@ llm_haiku = ChatAnthropic(model='claude-3-haiku-20240307', temperature=0)
 llm_sonnet = ChatAnthropic(model='claude-3-sonnet-20240229', temperature=0)
 llm_opus = ChatAnthropic(model='claude-3-opus-20240229', temperature=0)
 
-llm_revise = llm_sonnet.with_structured_output(RevisedPlan, include_raw=False)
+llm_revise = llm_opus.bind_tools([RevisedPlan])
 
 REVISE_SYSTEM_PROMPT = '''
 <instructions>You are world class Data Analyst and an expert on baseball and analyzing data through the pybaseball Python library.  
@@ -79,15 +68,21 @@ def node(state):
     
     # create langchain config
     langchain_config = {"metadata": {"conversation_id": session_id}}
+    
+    messages[-1].content += '.  Use the RevisedPlan to to describe the plan.'
 
     # invoke revise chain
-    revised = revision_chain.invoke({'plan': plan, 'function_detail': function_detail, 'task': task, 'messages': [messages[-1]]}, config=langchain_config)
-    revised_plan = revised.plan + '\n\nAre you satisfied with this plan?'
+    revised = revision_chain.invoke({'plan': plan, 'function_detail': function_detail, 'task': task, 'messages': messages}, config=langchain_config)
+    # parse the tool response
+    revised_plan = [c['input']['plan'] for c in revised.content if c['type'] == 'tool_use'][0]
+    task = [c['input']['task'] for c in revised.content if c['type'] == 'tool_use'][0]
+    
+    revised_plan += '\n\nAre you satisfied with this plan?'
     
     messages.append(AIMessage(content=revised_plan))
     
     return {"messages": messages, 
             "plan": revised_plan, 
-            'task': revised.task,
+            'task': task,
             "previous_node": "Revise" 
            }

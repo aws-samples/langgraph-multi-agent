@@ -1,5 +1,3 @@
-from dotenv import load_dotenv, find_dotenv
-
 #from langchain_community.chat_models import BedrockChat
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage
@@ -7,19 +5,11 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.pydantic_v1 import BaseModel, Field
 
 
-# read local .env file
-_ = load_dotenv(find_dotenv())
-
-# define language model
-model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
-#model_id = 'anthropic.claude-3-haiku-20240307-v1:0'
-#llm = BedrockChat(model_id=model_id, model_kwargs={'temperature': 0})
-
 opus_model_id = 'claude-3-opus-20240229'
 sonnet_model_id = 'claude-3-sonnet-20240229'
 haiku_model_id = 'claude-3-haiku-20240307'
 
-llm = ChatAnthropic(model=sonnet_model_id, temperature=0)
+llm = ChatAnthropic(model=opus_model_id, temperature=0)
 
 # define tools
 class PythonREPL(BaseModel):
@@ -36,6 +26,16 @@ llm_with_tools = llm.bind_tools([PythonREPL, FinalAnswer])
 
 # Prompt
 GENERATE_SYSTEM_PROMPT = '''<instructions>You are a highly skilled Python programmer.  Your goal is to help a user execute a plan by writing code for the PythonREPL tool.</instructions>
+
+As a reference, text between the <nearest_plan></nearest_plan> tags is a plan similar to the one you are being asked to evaluate.
+<nearest_plan>
+{nearest_plan}
+</nearest_plan>
+
+As a reference, text between the <nearest_code></nearest_code> tags is the code that was used to solve the similar plan referenced above.
+<nearest_code>
+{nearest_code}
+</nearest_code>
 
 Text between the <function_detail></function_detail> tags is documentation on the functions in use.  Do not attempt to use any feature that is not explicitly listed in the data dictionary for that function.
 <function_detail> 
@@ -79,6 +79,8 @@ def node(state):
     messages = state['messages']
     session_id = state['session_id']
     function_detail = state['function_detail']
+    nearest_plan = state['nearest_plan']
+    nearest_code = state['nearest_code']
     
     # create langchain config
     langchain_config = {"metadata": {"conversation_id": session_id}}
@@ -96,7 +98,7 @@ def node(state):
     generate_prompt_template = ChatPromptTemplate.from_messages([
         ("system", GENERATE_SYSTEM_PROMPT),
         MessagesPlaceholder(variable_name="messages"), 
-    ]).partial(function_detail=function_detail, task=task, plan=plan)
+    ]).partial(function_detail=function_detail, task=task, plan=plan, nearest_plan=nearest_plan, nearest_code=nearest_code)
 
     # define chain
     generate_chain = generate_prompt_template | llm_with_tools
