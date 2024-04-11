@@ -35,13 +35,13 @@ def node(state):
     # create langchain config
     langchain_config = {"metadata": {"conversation_id": session_id}}
     
-    print(f"Executing: {code}")
+    print(f"\nExecuting:\n{code}")
 
     # Attempt to execute code block
     result = python_repl.invoke(code, config=langchain_config)
     
     if result != '':
-        print(f'Result: {result}')
+        print(f'\nResult:\n{result}')
     
     if 'error' in result.lower():
         messages.append(ToolMessage(content=f'The previous code reached an error.  Here was the error: {result}', tool_call_id=tool_call_id))

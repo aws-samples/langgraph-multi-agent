@@ -47,8 +47,10 @@ def node(state):
     # determine path based on whether we have a similar "enough" plan
     if distance <= threshold:
         next_step = 'Modify'
+        known_plan = True
     else:
         next_step = 'Initialize'
+        known_plan = False
         
     # update state
     state['next'] = next_step
@@ -58,6 +60,7 @@ def node(state):
     state['function_detail'] = function_detail
     state['task'] = task
     state['previous_node'] = 'Retrieve'
+    state['known_plan'] = known_plan
     
     return state
             

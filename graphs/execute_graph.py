@@ -29,6 +29,8 @@ class ExecuteState(TypedDict):
     successful_code: list
     # The 'nearest_code' field collect the code for the most semantically similar task
     nearest_code: str
+    # The 'known_plan' field is a boolean that indicates whether a similar plan has been conducted
+    known_plan: bool
     
     
 ### Edges

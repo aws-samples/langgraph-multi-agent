@@ -10,6 +10,7 @@ def node(state):
     session_id = state['session_id']
     nearest_code = state['nearest_code']
     messages = state['messages']
+    known_plan = state['known_plan']
 
     inputs = {"plan": plan, 
               "task": task, 
@@ -17,7 +18,14 @@ def node(state):
               "session_id": session_id, 
               'messages':[], 
               'successful_code': [], 
+              'known_plan': known_plan,
               'nearest_code': nearest_code}
+    
+        # define model
+    if known_plan:
+        print('Known plan. Executing with Sonnet')
+    else:
+        print('Unknown plan. Executing with Opus')
 
     for s in execute_graph.graph.stream(inputs, {"recursion_limit": 100}):
         for key, value in s.items():

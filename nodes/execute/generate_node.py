@@ -9,16 +9,14 @@ opus_model_id = 'claude-3-opus-20240229'
 sonnet_model_id = 'claude-3-sonnet-20240229'
 haiku_model_id = 'claude-3-haiku-20240307'
 
-llm = ChatAnthropic(model=opus_model_id, temperature=0)
+llm_opus = ChatAnthropic(model=opus_model_id, temperature=0)
+llm_sonnet = ChatAnthropic(model=sonnet_model_id, temperature=0)
 
 # define tools
 class PythonREPL(BaseModel):
     """A Python REPL that can be used to execute Python code"""
     code: str = Field(description="Code block to be executed in a Python REPL")
     
-# bind tools to model
-llm_with_tools = llm.bind_tools([PythonREPL])
-
 # Prompt
 GENERATE_SYSTEM_PROMPT = '''<instructions>You are a highly skilled Python programmer.  Your goal is to help a user execute a plan by writing code for the PythonREPL tool.</instructions>
 
@@ -73,6 +71,7 @@ def node(state):
     session_id = state['session_id']
     function_detail = state['function_detail']
     nearest_code = state['nearest_code']
+    known_plan = state['known_plan']
     
     # create langchain config
     langchain_config = {"metadata": {"conversation_id": session_id}}
@@ -87,6 +86,12 @@ def node(state):
         MessagesPlaceholder(variable_name="messages"), 
     ]).partial(function_detail=function_detail, task=task, plan=plan, nearest_code=nearest_code) 
 
+    # define model
+    if known_plan:
+        llm_with_tools = llm_sonnet.bind_tools([PythonREPL])
+    else:
+        llm_with_tools = llm_opus.bind_tools([PythonREPL])
+        
     # define chain
     generate_chain = generate_prompt_template | llm_with_tools
     
