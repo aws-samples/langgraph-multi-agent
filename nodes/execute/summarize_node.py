@@ -29,7 +29,7 @@ def summarize_results(task, code_result, assistant_result, langchain_config):
     '''Used to to summarize the result after the plan has been executed successfully'''
     summarize_prompt = ChatPromptTemplate.from_messages([
         ("system", SUMMARIZE_SYSTEM_PROMPT),
-        ("user", "Here is the most recent output from the python repl tool:\n{code_result}\n\nHere is the most recent output from the AI Assistant::\n{assistant_result}")
+        ("user", "Here is the most recent output from the python repl tool:\n{code_result}\n\nHere is the most recent output from the AI Assistant:\n{assistant_result}")
     ])
 
     summarize_chain = summarize_prompt | llm_summarize 
