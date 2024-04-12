@@ -7,7 +7,7 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 
 # Define data models
 class RevisedPlan(BaseModel):
-    """Structured output for the revised plan"""
+    """Use this tool to describe the plan."""
     plan: str = Field(description="The revised plan after making changes requested by the user.")
     task: str = Field(description="The revised task after making changes requested by the user.  If there are no changes to the task, this will be the same as the original task")
     
@@ -77,6 +77,7 @@ def node(state):
     
     # parse the tool response
     tool_calls = revised.tool_calls
+
     revised_plan = [t['args']['plan'] for t in tool_calls if t['name'] == 'RevisedPlan'][0]
     task = [t['args']['task'] for t in tool_calls if t['name'] == 'RevisedPlan'][0]
     

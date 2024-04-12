@@ -17,7 +17,7 @@ for key in library_dict:
     
 # Define data model
 class InitialPlan(BaseModel):
-    """Initial plan generated to solve the user's task"""
+    """Use this tool to describe the plan created to solve a user's task.  You must always use this tool to describe the plan."""
     plan: str = Field(description="The exact plan that was generated to solve the user's task.")
     libraries: str = Field(description=f"A comma-separated list of pybaseball libraries that are used in the plan.  Possible pybaseball libraries are {', '.join(library_dict.keys())}")
 
@@ -51,7 +51,8 @@ def collect_library_helpers(libraries):
 INITIAL_PLAN_SYSTEM_PROMPT = '''
 <instructions>You are a world-class Python programmer and an expert on baseball, with a specialization in data analysis using the pybaseball Python library. 
 Your expertise is in formulating plans to complete tasks related to baseball data analysis.  You provide detailed steps that can be executed sequentially to solve the user's task.
-
+You always use the InitialPlan tool to describe the plan.
+ 
 Before creating the plan, do some analysis within <thinking></thinking> tags.
 </instructions>
 
@@ -72,9 +73,10 @@ Text between the <similar_plan></similar_plan> tags is the plan that was execute
 
 Text between the <rules></rules> tags are rules that must be followed.
 <rules> 
-1. 'mlbam' is the ID that should be used to link players across tables.
+1. 'mlbam' is the ID that should be used to link players across tables.  Use the playerid_reverse_lookup pybaseball library to convert an mlbam to a player name.
 2. Every step that includes a pybaseball function call should include the specific inputs required for that function call.
 3. The last step of the plan should always include a print() statement to describe the results.
+4. You must use the InitialPlan tool to describe the plan.
 </rules>
 '''
 
@@ -95,7 +97,7 @@ def formulate_initial_plan(task, existing_plan, similar_task, langchain_config):
     
     initial_prompt = ChatPromptTemplate.from_messages([
         ("system", INITIAL_PLAN_SYSTEM_PROMPT),
-        ("user", "{task}.  Use InitialPlan to describe the plan."), 
+        ("user", "{task}.  You must use the InitialPlan tool to describe the plan."), 
     ])
 
     initial_plan_chain = initial_prompt | llm_initial_plan 
@@ -104,6 +106,9 @@ def formulate_initial_plan(task, existing_plan, similar_task, langchain_config):
 
     # parse the tool response
     tool_calls = result.tool_calls
+    print('tool calls')
+    print(tool_calls)
+    
     initial_plan = [t['args']['plan'] for t in tool_calls if t['name'] == 'InitialPlan'][0]
     pybaseball_libraries = [t['args']['libraries'] for t in tool_calls if t['name'] == 'InitialPlan'][0]
 
