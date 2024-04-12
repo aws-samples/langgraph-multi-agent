@@ -58,6 +58,8 @@ revision_chain = revise_prompt_template | llm_revise
 
 def node(state):
     '''Used to revise the propsed plan based on User feedback'''
+    print(f'\n*** Entered Revise Node ***\n')
+    
     # collect metadata from state
     plan = state['plan']
     function_detail = state['function_detail']

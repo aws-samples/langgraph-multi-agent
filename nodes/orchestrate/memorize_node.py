@@ -32,6 +32,7 @@ def commit_to_memory(task: str, updated_plan: str, code: str, function_detail: s
 
 def node(state):
     '''Used to submit a successful execution to long term memory'''
+    print(f'\n*** Entered Memorize Node ***\n')
     # collect task and plan from state
     task = state['task']
     updated_plan = state['plan']

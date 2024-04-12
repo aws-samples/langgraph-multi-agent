@@ -21,7 +21,7 @@ def node(state):
     Returns:
         state (dict): New key added to state, error
     """
-
+    print(f'\n*** Entered Execute Node ***\n')
     # State
     session_id = state['session_id']
     messages = state['messages']

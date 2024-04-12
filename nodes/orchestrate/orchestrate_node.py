@@ -43,7 +43,8 @@ def get_pos_feedback_indicator(state):
 
 def node(state):
     '''Used to revise the propsed plan based on User feedback'''
-
+    print(f'\n*** Entered Orchestrate Node ***')
+    
     previous_node = state['previous_node']
 
     if previous_node == None:

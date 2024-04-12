@@ -17,6 +17,7 @@ threshold = .5
 
 # main function
 def node(state):
+    print(f'\n*** Entered Retrieve Node ***\n')
     # collect the User's task from the state
     task = state['messages'][-1].content
 

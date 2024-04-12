@@ -31,11 +31,10 @@ def execute_workflow(task, session_id):
         
     # execute
     for s in orchestrate_graph.graph.stream(state_dict[session_id]):
-        print(s)
-        print("----")
+        for key, value in s.items():
+            pass
             
     # update state
-    key = list(s.keys())[0] # key will be most recently executed node
     state_dict[session_id] = s[key] 
 
     

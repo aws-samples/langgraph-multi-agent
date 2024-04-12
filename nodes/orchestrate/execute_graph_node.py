@@ -29,7 +29,7 @@ def node(state):
 
     for s in execute_graph.graph.stream(inputs, {"recursion_limit": 100}):
         for key, value in s.items():
-            if key == 'summarize':
+            if key == 'Summarize':
                 successful_code = s[key]['successful_code']
                 final_result = s[key]['messages'][-1].content
                 

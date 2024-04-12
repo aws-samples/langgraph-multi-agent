@@ -59,6 +59,7 @@ def modify_existing_plan(task, nearest_task, nearest_plan, langchain_config):
 
 # main function
 def node(state):
+    print(f'\n*** Entered Modify Node ***\n')
     # collect the User's task from the state
     task = state['task']
     session_id = state['session_id']

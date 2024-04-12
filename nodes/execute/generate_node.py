@@ -63,7 +63,7 @@ def node(state):
     Returns:
         state (dict): New key added to state, documents, that contains retrieved documents
     """
-
+    print(f'\n*** Entered Generate Node ***\n')
     # State
     plan = state['plan']
     task = state['task']

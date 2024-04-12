@@ -112,6 +112,7 @@ def formulate_initial_plan(task, existing_plan, similar_task, langchain_config):
 
 # main function
 def node(state):
+    print(f'\n*** Entered Initialize Node ***\n')
     # collect the User's task from the state
     task = state['task']
     session_id = state['session_id']

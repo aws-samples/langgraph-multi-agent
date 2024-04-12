@@ -29,7 +29,7 @@ UPDATE_SYSTEM_PROMPT = '''
 <instructions>You are world class Data Analyst and an expert on baseball and analyzing data through the pybaseball Python library.  
 Your goal is to review a plan and ensure that all of the pybaseball functions are being used correctly.
 
-Before updating the plan, do some analysis within <thinking></thinking> tags. Are the correct attributes being passed to each call to a pybaseball library?
+Before updating the plan, do some analysis within <thinking></thinking> tags. Are the correct attributes with the correct data types being passed to each call to a pybaseball library?
 </instructions>
 
 Text between the <task></task> tags is the goal of the plan.
@@ -72,6 +72,7 @@ def update_plan(task, current_plan, function_detail, langchain_config):
 
 # main function
 def node(state):
+    print(f'\n*** Entered Update Node ***\n')
     # collect the User's task from the state
     task = state['task']
     session_id = state['session_id']

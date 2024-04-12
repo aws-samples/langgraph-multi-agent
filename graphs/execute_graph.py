@@ -46,31 +46,31 @@ def decide_to_finish(state):
     """
     # Determine whether there is a tool use call
     if state['messages'][-1].tool_calls:
-        return "execute"
+        return "Execute"
     else:
-        return "summarize"
+        return "Summarize"
     
 workflow = StateGraph(ExecuteState)
 
 # Define the nodes
-workflow.add_node("generate", generate_node.node)  # generation solution
-workflow.add_node("execute", execute_node.node)  # executed code
-workflow.add_node("summarize", summarize_node.node)  # executed code
+workflow.add_node("Generate", generate_node.node)  # generation solution
+workflow.add_node("Execute", execute_node.node)  # executed code
+workflow.add_node("Summarize", summarize_node.node)  # executed code
 
 # Build graph
-workflow.set_entry_point("generate")
+workflow.set_entry_point("Generate")
 
 # add edges
-workflow.add_edge("execute", "generate")
-workflow.add_edge("summarize", END)
+workflow.add_edge("Execute", "Generate")
+workflow.add_edge("Summarize", END)
 
 # add conditional edges
 workflow.add_conditional_edges(
-    "generate",
+    "Generate",
     decide_to_finish,
     {
-        "execute": "execute",
-        "summarize": "summarize"
+        "Execute": "Execute",
+        "Summarize": "Summarize"
     },
 )
 
