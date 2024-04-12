@@ -106,8 +106,6 @@ def formulate_initial_plan(task, existing_plan, similar_task, langchain_config):
 
     # parse the tool response
     tool_calls = result.tool_calls
-    print('tool calls')
-    print(tool_calls)
     
     initial_plan = [t['args']['plan'] for t in tool_calls if t['name'] == 'InitialPlan'][0]
     pybaseball_libraries = [t['args']['libraries'] for t in tool_calls if t['name'] == 'InitialPlan'][0]

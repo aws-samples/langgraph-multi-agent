@@ -7,7 +7,7 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 
 # Define data models
 class RevisedPlan(BaseModel):
-    """Use this tool to describe the plan."""
+    """Use this tool to describe the plan created to solve a user's task.  You must always use this tool to describe the plan."""
     plan: str = Field(description="The revised plan after making changes requested by the user.")
     task: str = Field(description="The revised task after making changes requested by the user.  If there are no changes to the task, this will be the same as the original task")
     
@@ -22,6 +22,7 @@ llm_revise = llm_opus.bind_tools([RevisedPlan])
 REVISE_SYSTEM_PROMPT = '''
 <instructions>You are world class Data Analyst and an expert on baseball and analyzing data through the pybaseball Python library.  
 Your goal is to help a User create a plan that can be used to complete a task.
+You always use the RevisedPlan tool to describe the plan.
 
 Review the original plan and the details related to the pybaseball functions in the plan.  Then revise the plan based on feedback from a User.
 </instructions>
@@ -45,6 +46,7 @@ Text between the <rules></rules> tags are rules that must be followed.
 <rules>
 1. Do not attempt to use any feature that is not explicitly listed in the data dictionary for that function.
 2. Every step that includes a pybaseball function call should include the specific input required for that function call
+3. You must always use the RevisedPlan tool to describe the plan.
 </rules>
 '''
 
@@ -70,7 +72,7 @@ def node(state):
     # create langchain config
     langchain_config = {"metadata": {"conversation_id": session_id}}
     
-    messages[-1].content += '.  Use the RevisedPlan to to describe the plan.'
+    messages[-1].content += '.  You must use the RevisedPlan tool to to describe the plan.'
 
     # invoke revise chain
     revised = revision_chain.invoke({'plan': plan, 'function_detail': function_detail, 'task': task, 'messages': messages}, config=langchain_config)

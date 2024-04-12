@@ -31,3 +31,375 @@ rays_wins = rays_2022[(rays_2022['W/L'] == 'W') | (rays_2022['W/L'] == 'W-wo')]
 # 4. Count the number of rows (games won) in the filtered dataframe
 num_wins = len(rays_wins)
 print(f""The Tampa Bay Rays won {num_wins} games in 2022."")",seed_function_detail
+How many home runs did Derek Jeter hit in 2008?,"1. Import the statcast_batter and playerid_lookup functions from pybaseball:
+
+```python 
+from pybaseball import statcast_batter, playerid_lookup
+```
+
+2. Look up Derek Jeter's MLBAM player ID:
+
+```python
+player_search = playerid_lookup('jeter', 'derek')  
+if len(player_search) > 0:
+    jeter_id = player_search.iloc[0].key_mlbam
+else:
+    raise ValueError('Could not find player ID for Derek Jeter')
+```
+
+3. Get Derek Jeter's statcast batting data for the 2008 season:
+
+```python
+jeter_2008 = statcast_batter('2008-01-01', '2008-12-31', player_id=jeter_id)
+```
+
+4. Filter to just home runs and count the number of rows:
+
+```python  
+jeter_2008_hr = jeter_2008[jeter_2008.events == 'home_run']
+hr_count = len(jeter_2008_hr)
+
+print(f""Derek Jeter hit {hr_count} home runs in the 2008 season."")  
+```
+
+The key change is using the start and end dates for the 2008 season when calling statcast_batter, rather than the 2010 season dates. 
+
+The error handling when looking up Jeter's player ID and the filtering of the statcast data to home runs remains the same.
+
+This revised plan should retrieve the number of home runs Derek Jeter hit in the 2008 season.
+
+Are you satisfied with this plan?","# 1. Import the statcast_batter and playerid_lookup functions from pybaseball
+from pybaseball import statcast_batter, playerid_lookup
+
+# 2. Look up Derek Jeter's MLBAM player ID
+player_search = playerid_lookup('jeter', 'derek')  
+if len(player_search) > 0:
+    jeter_id = player_search.iloc[0].key_mlbam
+else:
+    raise ValueError('Could not find player ID for Derek Jeter')
+
+# 3. Get Derek Jeter's statcast batting data for the 2008 season
+jeter_2008 = statcast_batter('2008-01-01', '2008-12-31', player_id=jeter_id)
+
+# 4. Filter to just home runs and count the number of rows
+jeter_2008_hr = jeter_2008[jeter_2008.events == 'home_run'] 
+hr_count = len(jeter_2008_hr)
+
+print(f""Derek Jeter hit {hr_count} home runs in the 2008 season."")","Text between the <statcast_batter_documentation></statcast_batter_documentation> tags is documentation for the statcast_batter library.  Consult this section to confirm which attributes to pass into the statcast_batter library.
+<statcast_batter_documentation>
+# Statcast Batter
+`statcast_batter(start_dt=[yesterday's date], end_dt=None, player_id)`
+
+The statcast function retrieves pitch-level statcast data for a given date or range or dates. 
+
+## Arguments
+`start_dt:` first day for which you want to retrieve data. Defaults to yesterday's date if nothing is entered. If you only want data for one date, supply a `start_dt` value but not an `end_dt` value. Format: YYYY-MM-DD. 
+
+`end_dt:` last day for which you want to retrieve data. Defaults to None. If you want to retrieve data for more than one day, both a `start_dt` and `end_dt` value must be given. Format: YYYY-MM-DD. 
+
+`player_id:` MLBAM player ID for the player you want to retrieve data for. To find a player's MLBAM ID, see the function [playerid_lookup](http://github.com/jldbc/pybaseball/docs/playerid_lookup.md) or the examples below. 
+
+### A note on data availability 
+The earliest available statcast data comes from the 2008 season when the system was first introduced to Major League Baseball. Queries before this year will not work. Further, some features were introduced after the 2008 season. Launch speed angle, for example, is only available from the 2015 season forward. 
+
+## Examples of valid queries
+
+```python
+from pybaseball import statcast_batter
+from pybaseball import playerid_lookup
+
+# find David Ortiz's player id (mlbam_key)
+playerid_lookup('ortiz','david')
+
+# get all available data
+data = statcast_batter('2008-04-01', '2017-07-15', player_id = 120074)
+
+# get data for August 16th, 2014
+data = statcast_batter('2014-08-16', player_id = 120074)
+```
+
+</statcast_batter_documentation>
+Text between the <playerid_lookup_documentation></playerid_lookup_documentation> tags is documentation for the playerid_lookup library.  Consult this section to confirm which attributes to pass into the playerid_lookup library.
+<playerid_lookup_documentation>
+# Player ID Lookup
+
+## Single Player Lookup
+
+`playerid_lookup(last, first=None, fuzzy=False)`
+
+Look up a player's MLBAM, Retrosheet, FanGraphs, and Baseball Reference ID by name.
+
+## Arguments
+`last:` String. The player's last name. Case insensitive.
+
+`first:` String. Optional. The player's first name. Case insensitive.
+
+`fuzzy:` Boolean. Optional. Search for inexact name matches, the 5 closest will be returned.
+
+Providing last name only will return all available id data for players with that last name (this will return several rows for a common last name like Jones, for example.) If multiple players exist for a (last name, first name) pair, you can figure out who's who by seeing their first and last years of play in the fields `mlb_played_first` and `mlb_played_last`.
+
+This data comes from Chadwick Bureau, meaning that there are several people in this data who are not MLB players. For this reason, supplying both last and first name is recommended to narrow your search. 
+
+## Examples of valid queries
+
+```python
+from pybaseball import playerid_lookup
+
+# find the ids of all players with last name Jones (returns 1,314 rows)
+data = playerid_lookup('jones')
+
+# only return the ids of chipper jones (returns one row)
+data = playerid_lookup('jones','chipper')
+
+# Will return all players named Pedro Martinez (returns *2* rows)
+data = playerid_lookup(""martinez"", ""pedro"", fuzzy=True)
+
+# Will return the 5 closest names to ""yadi molina"" (returns 5 rows)
+# First row will be Yadier Molina
+data = playerid_lookup(""molina"", ""yadi"", fuzzy=True)
+```
+
+## List Lookup
+
+`player_search_list(player_list)`
+
+Look up a list of player ID's by name, return a data frame of all players
+
+`player_list:` List. A list of tuples, of the form `(last, first)`. Case Insensitive.
+
+Sources are the same as those used in the above `playerid_lookup` function. Queries for this function must be exact name matches.
+
+## Examples of valid queries
+
+```python
+
+from pybaseball import player_search_list
+
+# Will return the ids for both Lou Brock and Chipper Jones (returns 2 rows)
+data = player_search_list([(""brock"",""lou""), (""jones"",""chipper"")])
+
+```
+</playerid_lookup_documentation>
+"
+Consider the first week of August 2020 - find the names of 3 pitchers who's curveballs were most similar to Max Scherzer's.,"Here is the revised plan to find the 3 pitchers with curveballs most similar to Max Scherzer's in the first week of August 2020:
+
+1. Use playerid_lookup to find Max Scherzer's MLBAM player ID by passing 'scherzer' as the last name and 'max' as the first name
+
+2. Get statcast pitching data for all pitchers from 2020-08-01 to 2020-08-07 using statcast_pitcher, passing '2020-08-01' for start_dt and '2020-08-07' for end_dt, but omitting player_id to get all pitchers
+
+3. Filter the data to only include curveballs using the pitch_type field
+
+4. Group the data by pitcher and calculate the average value of each relevant statcast metric for each pitcher's curveball. This will give us an average curveball vector for each pitcher.
+
+5. Separate Max Scherzer's average curveball vector from the other pitchers. 
+
+6. Use the average curveball vectors (excluding Scherzer) to train a KNN model. 
+
+7. Use the trained KNN model with Scherzer's average curveball vector as input to find the 3 most similar curveball vectors to Scherzer's.
+
+8. Get the MLBAM IDs of the 3 pitchers with the most similar curveballs based on the KNN results.
+
+9. Use playerid_reverse_lookup to get the names of those 3 pitchers by passing the list of their MLBAM IDs and key_type='mlbam'
+
+10. Print out the names of the 3 pitchers found to have the most similar curveballs to Max Scherzer in that time period based on the KNN model.
+
+Let me know if you would like me to explain or modify this revised plan further.
+
+Are you satisfied with this plan?","from pybaseball import playerid_lookup
+
+# 1. Use playerid_lookup to find Max Scherzer's MLBAM player ID 
+scherzer_id_results = playerid_lookup('scherzer', 'max')
+scherzer_id = scherzer_id_results.iloc[0].key_mlbam
+
+print(f""Max Scherzer's MLBAM ID is: {scherzer_id}"")
+
+from pybaseball import statcast
+
+# 2. Get statcast pitching data for all pitchers from 2020-08-01 to 2020-08-07 
+data = statcast('2020-08-01', '2020-08-07')
+
+print(f""{len(data)} statcast records found from 2020-08-01 to 2020-08-07"")
+
+# 3. Filter the data to only include curveballs
+print(data.pitch_type.unique())
+
+# 3. Filter the data to only include curveballs
+curveballs = data[data.pitch_type == 'CU']
+
+print(f""There are {len(curveballs)} curveball pitches in the dataset"")
+
+import numpy as np
+
+# 4. Group by pitcher and calculate average curveball metrics 
+pitcher_avgs = curveballs.groupby('pitcher')[['release_speed', 'release_spin_rate', 
+                                              'pfx_x', 'pfx_z', 
+                                              'release_pos_x', 'release_pos_z',
+                                              'release_extension']].mean()
+
+print(f""Calculated average curveball metrics for {len(pitcher_avgs)} pitchers"")
+
+# 5. Separate Max Scherzer's average curveball metrics
+scherzer_avg_cb = pitcher_avgs.loc[scherzer_id]
+other_pitchers_avg_cb = pitcher_avgs.drop(index=scherzer_id)
+
+print(f""Max Scherzer's average curveball metrics:"")
+print(scherzer_avg_cb)
+
+print(f""\nAverage curveball metrics for {len(other_pitchers_avg_cb)} other pitchers calculated"")
+
+from sklearn.neighbors import NearestNeighbors
+
+# 6. Train a KNN model on the other pitchers' average curveball metrics
+model = NearestNeighbors(n_neighbors=3)
+model.fit(other_pitchers_avg_cb)
+
+# 7. Find the 3 most similar pitchers to Scherzer
+distances, indices = model.kneighbors(scherzer_avg_cb.values.reshape(1, -1))
+
+print(f""The indices of the 3 most similar pitchers are: {indices[0]}"")
+
+# 8. Get the MLBAM IDs of the 3 most similar pitchers
+similar_pitcher_ids = other_pitchers_avg_cb.iloc[indices[0]].index
+
+print(f""The MLBAM IDs of the 3 most similar pitchers are: {similar_pitcher_ids}"")
+
+from pybaseball import playerid_reverse_lookup
+
+# 9. Get the names of the 3 most similar pitchers from their IDs
+similar_pitchers = playerid_reverse_lookup(similar_pitcher_ids.tolist())
+
+# 10. Print the results
+print(""According to the KNN model trained on Statcast data from 2020-08-01 to 2020-08-07,"") 
+print(""the 3 pitchers with the most similar curveballs to Max Scherzer are:"")
+for i, row in similar_pitchers.iterrows():
+    print(f""{row.name_first} {row.name_last}"")","Text between the <statcast_pitcher_documentation></statcast_pitcher_documentation> tags is documentation for the statcast_pitcher library.  Consult this section to confirm which attributes to pass into the statcast_pitcher library.
+<statcast_pitcher_documentation>
+# Statcast Pitcher
+`statcast_pitcher(start_dt=[yesterday's date], end_dt=None, player_id)`
+
+The statcast function retrieves pitch-level statcast data for a given date or range or dates. 
+
+## Arguments
+`start_dt:` first day for which you want to retrieve data. Defaults to yesterday's date if nothing is entered. If you only want data for one date, supply a `start_dt` value but not an `end_dt` value. Format: YYYY-MM-DD. 
+
+`end_dt:` last day for which you want to retrieve data. Defaults to None. If you want to retrieve data for more than one day, both a `start_dt` and `end_dt` value must be given. Format: YYYY-MM-DD. 
+
+`player_id:` MLBAM player ID for the pitcher you want to retrieve data for. To find a player's MLBAM ID, see the function [playerid_lookup](http://github.com/jldbc/pybaseball/docs/playerid_lookup.md) or the examples below. 
+
+### A note on data availability 
+The earliest available statcast data comes from the 2008 season when the system was first introduced to Major League Baseball. Queries before this year will not work. Further, some features were introduced after the 2008 season. Launch speed angle, for example, is only available from the 2015 season forward. 
+
+### Known issue
+In rare cases where a player has seen greater than 30,000 pitches over the time period specified in your query, only the first 30,000 of these plays will be returned. There is a fix in the works for this
+
+## Examples of valid queries
+
+```python
+from pybaseball import statcast_pitcher
+from pybaseball import playerid_lookup
+
+# find Chris Sale's player id (mlbam_key)
+playerid_lookup('sale','chris')
+
+# get all available data
+data = statcast_pitcher('2008-04-01', '2017-07-15', player_id = 519242)
+
+# get data for July 15th, 2017
+data = statcast_pitcher('2017-07-15','2017-07-15', player_id = 519242)
+```
+</statcast_pitcher_documentation>
+Text between the <playerid_lookup_documentation></playerid_lookup_documentation> tags is documentation for the playerid_lookup library.  Consult this section to confirm which attributes to pass into the playerid_lookup library.
+<playerid_lookup_documentation>
+# Player ID Lookup
+
+## Single Player Lookup
+
+`playerid_lookup(last, first=None, fuzzy=False)`
+
+Look up a player's MLBAM, Retrosheet, FanGraphs, and Baseball Reference ID by name.
+
+## Arguments
+`last:` String. The player's last name. Case insensitive.
+
+`first:` String. Optional. The player's first name. Case insensitive.
+
+`fuzzy:` Boolean. Optional. Search for inexact name matches, the 5 closest will be returned.
+
+Providing last name only will return all available id data for players with that last name (this will return several rows for a common last name like Jones, for example.) If multiple players exist for a (last name, first name) pair, you can figure out who's who by seeing their first and last years of play in the fields `mlb_played_first` and `mlb_played_last`.
+
+This data comes from Chadwick Bureau, meaning that there are several people in this data who are not MLB players. For this reason, supplying both last and first name is recommended to narrow your search. 
+
+## Examples of valid queries
+
+```python
+from pybaseball import playerid_lookup
+
+# find the ids of all players with last name Jones (returns 1,314 rows)
+data = playerid_lookup('jones')
+
+# only return the ids of chipper jones (returns one row)
+data = playerid_lookup('jones','chipper')
+
+# Will return all players named Pedro Martinez (returns *2* rows)
+data = playerid_lookup(""martinez"", ""pedro"", fuzzy=True)
+
+# Will return the 5 closest names to ""yadi molina"" (returns 5 rows)
+# First row will be Yadier Molina
+data = playerid_lookup(""molina"", ""yadi"", fuzzy=True)
+```
+
+## List Lookup
+
+`player_search_list(player_list)`
+
+Look up a list of player ID's by name, return a data frame of all players
+
+`player_list:` List. A list of tuples, of the form `(last, first)`. Case Insensitive.
+
+Sources are the same as those used in the above `playerid_lookup` function. Queries for this function must be exact name matches.
+
+## Examples of valid queries
+
+```python
+
+from pybaseball import player_search_list
+
+# Will return the ids for both Lou Brock and Chipper Jones (returns 2 rows)
+data = player_search_list([(""brock"",""lou""), (""jones"",""chipper"")])
+
+```
+</playerid_lookup_documentation>
+Text between the <playerid_reverse_lookup_documentation></playerid_reverse_lookup_documentation> tags is documentation for the playerid_reverse_lookup library.  Consult this section to confirm which attributes to pass into the playerid_reverse_lookup library.
+<playerid_reverse_lookup_documentation>
+# Player ID Reverse Lookup
+
+`playerid_reverse_lookup(player_ids, key_type='mlbam')`
+
+Find the names and ids of one or several players given a list of MLBAM, FanGraphs, Baseball Reference, or Retrosheet ids. 
+
+## Arguments
+`player_ids:` List. A list of player ids.
+
+`key_type:` String. The type of id you're passing in the `player_ids` field. Valid inputs are 'mlbam', 'retro', 'bbref', and 'fangraphs'. Defaults to 'mlbam' if no value is passed. 
+ 
+This function is useful for connecting data sets from various sources or for finding player names when only an id is provided. Data for this function comes from the Chadwick Bureau. 
+
+## Examples of valid queries
+
+```python
+from pybaseball import playerid_reverse_lookup
+
+# a list of mlbam ids
+player_ids = [116539, 116541, 641728, 116540]
+
+# find the names of the players in player_ids, along with their ids from other data sources
+data = playerid_reverse_lookup(player_ids, key_type='mlbam')
+
+# a list of fangraphs ids
+fg_ids = [826, 5417, 210, 1101]
+
+# find their names and ids from other data sources
+data = playerid_reverse_lookup(fg_ids, key_type='fangraphs')
+
+</playerid_reverse_lookup_documentation>
+"

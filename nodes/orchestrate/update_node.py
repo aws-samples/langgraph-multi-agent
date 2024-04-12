@@ -14,7 +14,7 @@ with open('state/functions.json', 'r') as file:
 
 
 class UpdatedPlan(BaseModel):
-    """Update a plan based on pybaseball library documentation"""
+    """Use this tool to describe the plan created to solve a user's task.  You must always use this tool to describe the plan."""
     plan: str = Field(description="The updated plan after making any updates necessary to ensure the correct attributes are passed to each of the pybasell functions.")
 
 # define language models
@@ -28,6 +28,7 @@ llm_update = llm_opus.bind_tools([UpdatedPlan])
 UPDATE_SYSTEM_PROMPT = '''
 <instructions>You are world class Data Analyst and an expert on baseball and analyzing data through the pybaseball Python library.  
 Your goal is to review a plan and ensure that all of the pybaseball functions are being used correctly.
+You always use the UpdatedPlan tool to describe the plan.
 
 Before updating the plan, do some analysis within <thinking></thinking> tags. Are the correct attributes with the correct data types being passed to each call to a pybaseball library?
 </instructions>
@@ -47,7 +48,7 @@ Text bewteen the <function_detail></function_detail> tags documentation on the p
 {function_detail}
 </function_detail>
 
-Make any updates necessary to ensure the correct attributes are being passed to each of the pybaseball functions.
+Make any updates necessary to ensure the correct attributes are being passed to each of the pybaseball functions.  You must use the UpdatedPlan tool to describe the plan.
 '''
 
 
@@ -56,7 +57,7 @@ def update_plan(task, current_plan, function_detail, langchain_config):
     
     update_prompt = ChatPromptTemplate.from_messages([
         ("system", UPDATE_SYSTEM_PROMPT),
-        ("user", "Review the current plan and make any updates necessary to ensure the correct attributes are being passed to the pybaseball functinons.  Use UpdatedPlan to describe the plan."), 
+        ("user", "Review the current plan and make any updates necessary to ensure the correct attributes are being passed to the pybaseball functinons.  You must use the UpdatedPlan tool to describe the plan."), 
     ])
 
     update_chain = update_prompt | llm_update 
