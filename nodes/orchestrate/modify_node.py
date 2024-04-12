@@ -10,21 +10,22 @@ from langchain_core.pydantic_v1 import BaseModel, Field
     
 # Define data models
 class ModifiedPlan(BaseModel):
-    """Modify a plan based on feedback from the user"""
+    """Use this tool to modify a plan based on feedback from the user"""
     plan: str = Field(description="The modified plan after making changes requested by the user.")
 
 # define language models
-#llm_haiku = ChatAnthropic(model='claude-3-haiku-20240307', temperature=0)
+llm_haiku = ChatAnthropic(model='claude-3-haiku-20240307', temperature=0)
 llm_sonnet = ChatAnthropic(model='claude-3-sonnet-20240229', temperature=0)
-#llm_opus = ChatAnthropic(model='claude-3-opus-20240229', temperature=0)
+llm_opus = ChatAnthropic(model='claude-3-opus-20240229', temperature=0)
 
-llm_modify = llm_sonnet.bind_tools([ModifiedPlan])
-
+llm_modify = llm_sonnet
+llm_format = llm_haiku.bind_tools([ModifiedPlan])
 
 
 MODIFY_SYSTEM_PROMPT = '''
-<instructions>Review the original plan and update it based on the new request while maintaining the format.
+<instructions>Review the original plan and make the minimum updates necessary to meet the new request while maintaining the original format.
 If the original plan already aligns with the new request, return it without any modifications.
+
 Before updating the plan, do some analysis within <thinking></thinking> tags. 
 </instructions>
 
@@ -43,10 +44,15 @@ def modify_existing_plan(task, nearest_task, nearest_plan, langchain_config):
     '''Used to revise the propsed plan based on User feedback'''
     modify_prompt = ChatPromptTemplate.from_messages([
         ("system", MODIFY_SYSTEM_PROMPT),
-        ("user", "{updates}.  Use ModifiedPlan to describe the plan.") 
+        ("user", "{updates}") 
+    ])
+    
+    format_prompt = ChatPromptTemplate.from_messages([
+        ("system", 'Use the ModifiedPlan tool to describe the plan.'),
+        ("user", "{plan}"), 
     ])
 
-    modify_chain = modify_prompt | llm_modify 
+    modify_chain = modify_prompt | llm_modify | format_prompt | llm_format
 
     result = modify_chain.invoke({'existing_plan':nearest_plan, 'original_task': nearest_task, 'updates':task}, config=langchain_config)
 

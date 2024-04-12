@@ -6,6 +6,7 @@ from langchain_anthropic import ChatAnthropic
 #from langchain_community.chat_models import BedrockChat
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain_core.runnables.base import RunnableParallel
 
 with open('state/functions.json', 'r') as file:
     library_dict = json.load(file)
@@ -15,19 +16,25 @@ for key in library_dict:
     docs = library_dict[key]['docs']
     libraries_string += f'<{key}>\n{docs}\n</{key}>\n'
     
-# Define data model
-class InitialPlan(BaseModel):
-    """Use this tool to describe the plan created to solve a user's task.  You must always use this tool to describe the plan."""
+libraries_lst = ', '.join(library_dict.keys())
+    
+# Define data models
+class FormattedPlan(BaseModel):
+    """Use this tool to describe the plan created to solve a user's task."""
     plan: str = Field(description="The exact plan that was generated to solve the user's task.")
-    libraries: str = Field(description=f"A comma-separated list of pybaseball libraries that are used in the plan.  Possible pybaseball libraries are {', '.join(library_dict.keys())}")
 
+class PybaseballLibraries(BaseModel):
+    """Use this tool to describe the plan created to solve a user's task."""
+    libraries: str = Field(description=f"A comma-separated list of pybaseball libraries that are used in the plan.  You may only include libraries from this list: {libraries_lst}.")
 
 # define language models
-#llm_haiku = ChatAnthropic(model='claude-3-haiku-20240307', temperature=0)
-#llm_sonnet = ChatAnthropic(model='claude-3-sonnet-20240229', temperature=0)
+llm_haiku = ChatAnthropic(model='claude-3-haiku-20240307', temperature=0)
+llm_sonnet = ChatAnthropic(model='claude-3-sonnet-20240229', temperature=0)
 llm_opus = ChatAnthropic(model='claude-3-opus-20240229', temperature=0)
 
-llm_initial_plan = llm_opus.bind_tools([InitialPlan])
+llm_initial_plan = llm_opus
+llm_formatted_plan = llm_haiku.bind_tools([FormattedPlan])
+llm_libraries = llm_sonnet.bind_tools([PybaseballLibraries])
 
 def collect_library_helpers(libraries):
     '''
@@ -51,7 +58,6 @@ def collect_library_helpers(libraries):
 INITIAL_PLAN_SYSTEM_PROMPT = '''
 <instructions>You are a world-class Python programmer and an expert on baseball, with a specialization in data analysis using the pybaseball Python library. 
 Your expertise is in formulating plans to complete tasks related to baseball data analysis.  You provide detailed steps that can be executed sequentially to solve the user's task.
-You always use the InitialPlan tool to describe the plan.
  
 Before creating the plan, do some analysis within <thinking></thinking> tags.
 </instructions>
@@ -76,9 +82,10 @@ Text between the <rules></rules> tags are rules that must be followed.
 1. 'mlbam' is the ID that should be used to link players across tables.  Use the playerid_reverse_lookup pybaseball library to convert an mlbam to a player name.
 2. Every step that includes a pybaseball function call should include the specific inputs required for that function call.
 3. The last step of the plan should always include a print() statement to describe the results.
-4. You must use the InitialPlan tool to describe the plan.
+4. Explicitly state all pybaseball libraries in use
 </rules>
 '''
+
 
 def formulate_initial_plan(task, existing_plan, similar_task, langchain_config):
     """
@@ -97,18 +104,37 @@ def formulate_initial_plan(task, existing_plan, similar_task, langchain_config):
     
     initial_prompt = ChatPromptTemplate.from_messages([
         ("system", INITIAL_PLAN_SYSTEM_PROMPT),
-        ("user", "{task}.  You must use the InitialPlan tool to describe the plan."), 
+        ("user", "{task}"), 
     ])
+    
+    format_prompt = ChatPromptTemplate.from_messages([
+        ("system", 'Use the FormattedPlan tool to describe the plan.'),
+        ("user", "{plan}"), 
+    ])
+    
+    libraries_prompt = ChatPromptTemplate.from_messages([
+        ("system", 'Use the PybaseballLibraries tool to describe the pybaseball libraries used in the plan.'),
+        ("user", "{plan}"), 
+    ])
+    
+    # define individual cain to parse the plan and the libraries
+    plan_chain = format_prompt | llm_formatted_plan
+    libraries_chain = libraries_prompt | llm_libraries
+    
+    # combine into a parallel chain
+    parallel_formatting_chain = RunnableParallel(plan=plan_chain, libraries=libraries_chain)
 
-    initial_plan_chain = initial_prompt | llm_initial_plan 
+    # combine all into a single chain
+    initial_plan_chain = initial_prompt | llm_initial_plan | parallel_formatting_chain
 
     result = initial_plan_chain.invoke({'task':task, 'existing_plan':existing_plan, 'similar_task':similar_task, 'libraries_string': libraries_string}, config=langchain_config)
 
-    # parse the tool response
-    tool_calls = result.tool_calls
-    
-    initial_plan = [t['args']['plan'] for t in tool_calls if t['name'] == 'InitialPlan'][0]
-    pybaseball_libraries = [t['args']['libraries'] for t in tool_calls if t['name'] == 'InitialPlan'][0]
+    # parse the tool responses
+    plan_tools = result['plan'].tool_calls
+    initial_plan = [t['args']['plan'] for t in plan_tools if t['name'] == 'FormattedPlan'][0]
+
+    libraries_tools = result['libraries'].tool_calls
+    pybaseball_libraries = [t['args']['libraries'] for t in libraries_tools if t['name'] == 'PybaseballLibraries'][0]
 
     return initial_plan, pybaseball_libraries
 
