@@ -1,5 +1,3 @@
-# reqiured update
-OPENAI_API_KEY=
 # optional update for LangSmith
 LANGCHAIN_API_KEY=
 # if providing a LANGCHAIN_API_KEY, set this to true

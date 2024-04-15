@@ -380,3 +380,12 @@ W: wins
 L: losses
 W-L%: win-loss percentage
 GB: games back in the division'''
+
+playerid_reverse_lookup = '''name_last
+name_first
+key_mlbam
+key_retro
+key_bbref
+key_fangraphs
+mlb_played_first
+mlb_played_last'''
