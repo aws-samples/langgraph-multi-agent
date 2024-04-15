@@ -10,7 +10,7 @@ The workflow consists of two agent systems: one for general workflow and plannin
 
 The graphs are organized in a modular manner so that each node serves a specific purpose.
 
-![workflow](images/nodes.drawio  "Nodes")
+![nodes](images/nodes.drawio.png  "Nodes")
 
 ## Sample Usage
 
