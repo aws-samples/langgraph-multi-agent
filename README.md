@@ -4,14 +4,20 @@
 
 The purpose of this repository is to demonstrate how LangGraph can be used to build a stateless multi-agent workflow to serve as an assistant for data analysis.  This workflow leverages the [pybaseball](https://github.com/jldbc/pybaseball) Python library to extract data which is then used for analysis based on the user's request.
 
+The workflow consists of two agent systems: one for general workflow and planning and another for code generation and execution.  An Agent is fundamentally a language model on a loop until some stopping condition is met, and a Graph is what we use to define the loop. For this reason, "Agent" and "Graph" are used interchangeably in this documentation.
+
 ![workflow](images/workflow.drawio.png  "Workflow")
+
+The graphs are organized in a modular manner so that each node serves a specific purpose.
+
+![workflow](images/nodes.drawio  "Nodes")
 
 ## Sample Usage
 
-The sample notebooks provided demonstrate three simple use cases as examples of how this system can be used.
+The sample notebooks demonstrate three simple use cases as examples of how this system can be used.  
 
 ```
-1.  How many games did the Rays win in 2022?
+1.  How many home runs did Derek Jeter hit in 2010?
 ```
 
 ```
@@ -53,29 +59,40 @@ langgraph-multi-agent
 │   *_sample_*.ipynb  :  Demonstration of a use case
 │
 └───images
-│   │   workflow.drawio.png
+│   │   workflow.drawio.png  
+│   │   nodes.drawio.png 
 │
-└───agents
+└───graphs
 │   │   __init__.py
-│   │   execute_agent.py : Resposible for creating the Execute Agent
-│   │   orchestrate_agent.py : Resposible for creating the Orchestrate Agent
+│   │   execute_graph.py : Resposible for generating and executing Python code to execute the plan
+│   │   orchestrate_graph.py : Resposible for general orchestration and plan creation
 │
-└───dynamodb
+└───state
 │   │   __init__.py
 │   │   create_functions_statsapi.ipynb : Helper notebook to persist pybaseball function metadata
 │   │   data_dictionary.py : String representations of the data dictionary for pybaseball functions
 │   │   functions.json : Output from create_functions_statsapi.ipynb that will be read by the agent system
 │
-└───lambda_function
+└───function
 │   │   __init__.py
 │   │   baseball_lambda.py : Entrypoint for the Agent system
 │
 └───nodes
-│   │   __init__.py
-│   │   execute_node.py : Responsible for creating the Execute Node
-│   │   memorize_node.py : Responsible for creating the Memorize Node
-│   │   plan_node.py : Responsible for creating the Plan Node
-│   │   revise_node.py : Responsible for creating the Revise Node
+│   └───execute
+│   │   │   __init__.py
+│   │   │   execute_node.py : Responsible for creating the Execute Node
+│   │   │   generate_node.py : Responsible for creating the Generate Node
+│   │   │   summarize_node.py : Responsible for creating the Summarize Node
+│   │
+│   └───orchestrate
+│   │   │   execute_graph_node.py : Triggers the Execute Graph
+│   │   │   initialize_node.py : Responsible for creating the Initialize Node
+│   │   │   memorize_node.py : Responsible for creating the Memorize Node
+│   │   │   modify_node.py : Responsible for creating the Modify Node
+│   │   │   orchestrate_node.py : Responsible for creating the Orchestrate Node
+│   │   │   retrieve_node.py : Responsible for creating the Retrieve Node
+│   │   │   revise_node.py : Responsible for creating the Revise Node
+│   │   │   update_node.py : Responsible for creating the Update Node
 │
 └───vectordb
 │   │   __init__.py
