@@ -1,0 +1,31 @@
+text:
+- name: plan
+  no_index: false
+  no_stem: false
+  sortable: false
+  weight: 1
+  withsuffixtrie: false
+- name: code
+  no_index: false
+  no_stem: false
+  sortable: false
+  weight: 1
+  withsuffixtrie: false
+- name: function_detail
+  no_index: false
+  no_stem: false
+  sortable: false
+  weight: 1
+  withsuffixtrie: false
+- name: content
+  no_index: false
+  no_stem: false
+  sortable: false
+  weight: 1
+  withsuffixtrie: false
+vector:
+- algorithm: FLAT
+  datatype: FLOAT32
+  dims: 1024
+  distance_metric: COSINE
+  name: content_vector

@@ -9,7 +9,7 @@ from langchain_core.messages import AIMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
 
-with open('state/functions.json', 'r') as file:
+with open('pybaseball_docs/functions.json', 'r') as file:
     library_dict = json.load(file)
 
 

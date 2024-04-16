@@ -67,7 +67,7 @@ langgraph-multi-agent
 │   │   execute_graph.py : Resposible for generating and executing Python code to execute the plan
 │   │   orchestrate_graph.py : Resposible for general orchestration and plan creation
 │
-└───state
+└───pybaseball_docs
 │   │   __init__.py
 │   │   create_functions_statsapi.ipynb : Helper notebook to persist pybaseball function metadata
 │   │   data_dictionary.py : String representations of the data dictionary for pybaseball functions
@@ -93,11 +93,4 @@ langgraph-multi-agent
 │   │   │   retrieve_node.py : Responsible for creating the Retrieve Node
 │   │   │   revise_node.py : Responsible for creating the Revise Node
 │   │   │   update_node.py : Responsible for creating the Update Node
-│
-└───vectordb
-│   │   __init__.py
-│   │   create_execution_plan_vectordb_entries.ipynb : Helper notebook to create or clear execution plans
-│   │   execution_plan.csv : Execution plans are written to disk so that they can be read by vector database
-│   │   vectordb.py : Helper function for creating and retrieving the vector database collection for execution plans
-
 ```
