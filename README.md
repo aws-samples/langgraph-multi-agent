@@ -31,7 +31,7 @@ The sample notebooks demonstrate three simple use cases as examples of how this 
 ## Getting Started
 1. Clone repository and navigate to the `langgraph-multi-agent` folder 
 2. Update local `env` file with the required environment variables and rename to `.env`
-3. deploy Redis locally
+3. Deploy Redis locally:
 
 `docker run -d -p 6379:6379 -p 8001:8001 redis/redis-stack:latest`
 
