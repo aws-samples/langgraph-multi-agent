@@ -76,7 +76,7 @@ langgraph-multi-agent
 │   │   __init__.py
 │   │   create_function_docs.ipynb : Helper notebook to persist pybaseball function metadata
 │   │   data_dictionary.py : String representations of the data dictionary for pybaseball functions
-│   │   functions.json : Output from create_functions_statsapi.ipynb that will be read by the agent system
+│   │   functions.json : Output from create_function_docs.ipynb that will be read by the agent system
 │
 └───function
 │   │   __init__.py
