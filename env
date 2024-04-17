@@ -5,3 +5,5 @@ LANGCHAIN_TRACING_V2=false
 # leave these
 LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
 TOKENIZERS_PARALLELISM=false
+REDIS_IP=localhost
+REDIS_PORT=6379
