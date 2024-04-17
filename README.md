@@ -31,6 +31,11 @@ The sample notebooks demonstrate three simple use cases as examples of how this 
 ## Getting Started
 1. Clone repository and navigate to the `langgraph-multi-agent` folder 
 2. Update local `env` file with the required environment variables and rename to `.env`
+3. deploy Redis locally
+
+`docker run -d -p 6379:6379 -p 8001:8001 redis/redis-stack:latest`
+
+If things are running correctly you should see a nice Redis UI at http://localhost:8001.
 
 ## Running the Jupyter Notebooks
 1. Create and activate a virtual environment
